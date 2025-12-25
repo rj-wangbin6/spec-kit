@@ -22,8 +22,8 @@ scripts:
 ### 步骤 1：前置检查
 
 确认必需资源存在：
-- `.specify/code-review/specification.md` - 审查标准
-- `.specify/code-review/template.md` - 报告模板
+- `.specify/templates/code-review/specification.md` - 审查标准
+- `.specify/templates/code-review/template.md` - 报告模板
 
 ### 步骤 2：同步代码（可选）
 
