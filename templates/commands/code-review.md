@@ -1,8 +1,5 @@
 ---
 description: 代码审查助手 - 需求文档理解与符合性审查（支持前后端）
-scripts:
-  sh: echo "Code review workflow initiated"
-  ps: Write-Host "Code review workflow initiated"
 ---
 
 # Code Review Agent 1.2
@@ -24,9 +21,9 @@ scripts:
 ### 步骤 1：前置检查
 
 确认必需资源存在：
-- `templates/code-review/backend-specification.md` - 后端开发规范
-- `templates/code-review/frontend-specification.md` - 前端开发规范
-- `templates/code-review/template.md` - 报告模板
+- `.specify/templates/code-review/backend-specification.md` - 后端开发规范
+- `.specify/templates/code-review/frontend-specification.md` - 前端开发规范
+- `.specify/templates/code-review/template.md` - 报告模板
 
 ### 步骤 2：同步代码（可选）
 
@@ -34,43 +31,98 @@ scripts:
 
 ### 步骤 3：收集代码变更记录
 
-**⚠️ 重要：必须先调用 speckit.code-review-collect 子代理收集变更记录**
+**⚠️ 重要：主agent必须直接使用技能收集变更记录（子agent不具备使用技能的能力）**
 
-**调用方式**：
+#### 3.1 确定审查场景
+
+询问用户选择审查类型：
+
+**场景A：按开发者审查（已提交代码）**
+- 询问：开发者标识（邮箱或用户名）
+- 询问：时间范围（开始日期、结束日期）
+- 使用技能：`git-commit-log`
+
+**场景B：按需求审查（已提交代码）**
+- 询问：需求文档来源（飞书链接/本地路径/直接描述）
+- 如果是飞书文档，使用技能：`feishu-doc-reader`
+- 询问：时间范围（可选，用于过滤提交记录）
+- 使用技能：`git-commit-log`
+
+**场景C：本地未提交代码审查**
+- 询问：项目根目录路径
+- 使用工具：`run_in_terminal` 执行 `git diff` 命令
+
+#### 3.2 识别Git仓库
+
+**⚠️ 重要：在调用技能前，先识别当前工作区的Git仓库结构**
+
+**场景判断**：
+
+1. **工作区根目录是Git仓库**
+   - 检查：工作区根目录下存在 `.git` 文件夹
+   - 操作：直接在当前目录使用git命令
+
+2. **工作区根目录不是Git仓库（多仓库项目）**
+   - 检查：工作区根目录下不存在 `.git`，但子目录存在
+   - 操作：自动扫描工作区下所有包含 `.git` 的子目录
+
+**自动扫描Git仓库**：
+
+使用 `file_search` 工具查找所有Git仓库：
 ```javascript
-runSubagent({
-  description: "收集代码变更记录",
-  prompt: `
-我需要收集待审查的代码变更记录。
-
-请引导我提供必要的信息：
-- 审查类型（按开发者/按需求/本地未提交）
-- 开发者信息和时间范围（如果按开发者）
-- 需求文档或需求描述（如果按需求）
-- 项目根目录（如果是本地未提交代码）
-
-请开始交互式收集流程。
-  `
+file_search({
+  query: "**/.git",  // 查找所有.git文件夹
 })
 ```
 
-**子代理职责**：
-- 交互式引导用户提供完整信息
-- 验证信息有效性
-- 调用 git-commit-log 或 feishu-doc-reader 技能
-- 扫描本地Git仓库（如需要）
-- 返回标准格式的变更记录
+从返回结果中提取仓库列表：
+- 结果示例：`${workspaceFolder}/ecp-system/.git`
+- 提取仓库路径：`${workspaceFolder}/ecp-system`（移除最后的 `/.git`）
 
-**返回内容**：
-- 审查场景类型
-- 开发者信息/需求信息
-- 时间范围
-- 变更记录统计
-- 详细的提交记录或本地diff
+**示例输出**：
+```
+识别到以下Git仓库：
+1. ${workspaceFolder}/ecp-system
+2. ${workspaceFolder}/ecp-agreement
+3. ${workspaceFolder}/ecp-special
+4. ${workspaceFolder}/op-api
+5. ${workspaceFolder}/op-order
+... 共15个仓库
+```
 
-### 步骤 3.5：需求文档理解（如子代理已收集则跳过）
+#### 3.3 调用技能收集数据
 
-**触发条件**：用户提供需求文档时执行此步骤。
+根据场景调用相应技能：
+
+**使用 git-commit-log 技能**：
+```markdown
+请阅读并执行 .claude/skills/git-commit-log/SKILL.md 中的步骤：
+1. 引导用户提供必需信息（开发者、时间范围等）
+2. 使用步骤3.2识别的仓库列表
+3. 遍历所有仓库收集符合条件的提交记录
+4. 输出提交记录到控制台（不创建临时文件）
+```
+
+**使用 feishu-doc-reader 技能**（如需要）：
+```markdown
+请阅读并执行 .claude/skills/feishu-doc-reader/SKILL.md 中的步骤：
+1. 获取飞书文档链接
+2. 提取文档内容（需求描述、接口定义等）
+3. 解析为结构化数据
+```
+
+#### 3.4 验证收集结果
+
+确认以下信息已收集完整：
+- [ ] 提交记录或diff内容不为空
+- [ ] 如果按开发者审查：确认开发者标识、时间范围
+- [ ] 如果按需求审查：确认需求文档已读取、相关提交已识别
+- [ ] 变更文件列表清晰
+- [ ] 每个提交的变更内容可追溯
+
+### 步骤 3.5：需求文档理解
+
+**触发条件**：用户提供需求文档时执行此步骤（在步骤3中通过飞书技能或read_file获取）。
 
 #### 需求文档来源
 
@@ -226,9 +278,9 @@ ${ 需求文档存在时添加 }
    
    根据代码类型，严格应用对应的开发规范：
    
-   - **后端代码**：参考 `templates/code-review/backend-specification.md`
+   - **后端代码**：参考 `.specify/templates/code-review/backend-specification.md`
      - 检查循环调用、事务管理、SQL性能、安全漏洞等
-   - **前端代码**：参考 `templates/code-review/frontend-specification.md`
+   - **前端代码**：参考 `.specify/templates/code-review/frontend-specification.md`
      - 检查性能优化、状态管理、安全性（XSS）、组件设计等
    
    **重要**：必须完整阅读并应用相应规范文档中的所有检查项，按问题等级（🔴严重 / 🟡一般 / 🔵优化）进行分类。
@@ -242,20 +294,352 @@ ${ 需求文档存在时添加 }
    - 修复收益
    - **【如有需求文档】需求符合性说明**
 
+### 步骤 4.5：前后端接口对接审查（全栈开发场景）
+
+**⚠️ 重要：当代码变更同时包含前后端代码时，必须执行此步骤**
+
+#### 触发条件
+
+满足以下任一条件时触发：
+1. 变更记录中同时存在前端代码（`*.vue`, `*.tsx`, `*.jsx`等）和后端代码（`*.java`, `*.xml`等）
+2. 需求文档明确说明涉及前后端联调
+3. 用户明确要求审查前后端对接
+
+#### 审查步骤
+
+**4.5.1 识别前后端接口调用关系**
+
+从步骤4的调用链分析结果中提取：
+- **前端调用**：API请求代码（axios/fetch调用）
+  - 请求地址、HTTP方法
+  - 请求参数结构
+  - 响应数据处理逻辑
+
+- **后端接口**：Controller接口定义
+  - 接口路径、HTTP方法
+  - 请求参数定义（@RequestBody/@RequestParam）
+  - 响应结果定义（返回值类型）
+
+**4.5.2 接口对接一致性检查**
+
+逐一对比前后端接口，检查以下维度：
+
+| 检查项 | 检查内容 | 问题等级 |
+|-------|---------|----------|
+| 🔗 **接口路径** | URL路径是否完全匹配（含路径参数） | 🔴 严重 |
+| 🔧 **HTTP方法** | GET/POST/PUT/DELETE是否一致 | 🔴 严重 |
+| 📤 **请求参数** | 字段名、类型、必填性是否一致 | 🔴 严重 |
+| 📥 **响应结构** | 返回数据结构是否匹配 | 🔴 严重 |
+| 🔢 **数据类型** | 字段类型映射（String/Number/Boolean等） | 🔴 严重 |
+| 📝 **字段命名** | 前后端字段命名风格一致性（camelCase/snake_case） | 🟡 一般 |
+| 🔄 **枚举值** | 状态码、枚举值是否对齐 | 🔴 严重 |
+| ⚠️ **错误处理** | 前端是否正确处理后端错误响应 | 🟡 一般 |
+| 🔐 **权限参数** | token/userId等认证参数是否传递 | 🔴 严重 |
+
+**4.5.3 常见对接问题示例**
+
+**问题1：请求参数字段不匹配**
+```javascript
+// ❌ 前端代码
+axios.post('/api/order/cancel', {
+  orderIds: ['001', '002'],  // 字段名：orderIds（复数）
+  reason: '用户取消'
+})
+
+// ❌ 后端代码
+@PostMapping("/cancel")
+public Result cancel(@RequestBody CancelOrderRequest request) {
+    List<String> orderId = request.getOrderId();  // 字段名：orderId（单数）
+    // ...
+}
+```
+**问题**：前端传 `orderIds`，后端接收 `orderId`，字段名不匹配导致接收为null
+
+**修复**：统一字段名
+```javascript
+// ✅ 前端修复
+orderIdList: ['001', '002']  // 改为 orderIdList
+
+// ✅ 后端修复  
+List<String> orderIdList = request.getOrderIdList();
+```
+
+**问题2：响应数据结构不匹配**
+```javascript
+// ❌ 前端代码
+const { data } = await api.getUserList();
+const users = data.list;  // 期望：{ list: [...], total: 100 }
+const total = data.total;
+
+// ❌ 后端代码
+@GetMapping("/list")
+public Result<List<User>> list() {
+    return Result.success(userList);  // 实际返回：List<User>
+}
+```
+**问题**：前端期望分页结构，后端直接返回列表，导致 `data.total` 为 undefined
+
+**修复**：统一返回结构
+```java
+// ✅ 后端修复
+@GetMapping("/list")
+public Result<PageResult<User>> list() {
+    PageResult<User> pageResult = new PageResult<>();
+    pageResult.setList(userList);
+    pageResult.setTotal(total);
+    return Result.success(pageResult);
+}
+```
+
+**问题3：枚举值不对齐**
+```javascript
+// ❌ 前端代码
+if (order.status === 'pending') {  // 前端使用英文：pending
+  // ...
+}
+
+// ❌ 后端代码
+if ("待支付".equals(order.getStatus())) {  // 后端使用中文：待支付
+  // ...
+}
+```
+**问题**：前后端状态码不一致，前端判断永远为false
+
+**修复**：统一枚举定义
+```java
+// ✅ 后端定义枚举
+public enum OrderStatus {
+    PENDING("pending", "待支付"),
+    PAID("paid", "已支付");
+    
+    private String code;  // 给前端用
+    private String desc;  // 给后端显示
+}
+
+// ✅ 接口返回
+return Result.success(order.getStatus().getCode());  // 返回 "pending"
+```
+
+**4.5.4 生成接口对接审查结果**
+
+在审查报告中添加独立章节：
+
+```markdown
+## 前后端接口对接审查
+
+### 接口清单
+
+| 接口路径 | HTTP方法 | 前端调用 | 后端实现 | 状态 |
+|---------|---------|---------|---------|------|
+| /api/order/cancel | POST | ✅ | ✅ | 🟢 一致 |
+| /api/order/list | GET | ✅ | ⚠️ | 🔴 不匹配 |
+
+### 对接问题列表
+
+#### [🔴严重] 订单列表接口响应结构不匹配
+
+**前端代码**：
+- 文件：`src/api/order.ts`
+- 调用：`const { list, total } = data;`
+
+**后端代码**：
+- 文件：`OrderController.java`
+- 返回：`Result<List<Order>>`（缺少total字段）
+
+**问题**：前端期望分页结构，后端直接返回列表
+
+**修复方案**：（参考上述示例）
+
+#### [🔴严重] 取消订单接口字段名不匹配
+
+...
+```
+
+#### 4.5.5 前后端联调测试建议
+
+在报告末尾添加联调测试建议：
+
+```markdown
+## 联调测试建议
+
+### 必测场景
+
+1. **接口连通性测试**
+   - [ ] 前端能正常调用后端接口
+   - [ ] 请求参数正确传递到后端
+   - [ ] 后端响应前端能正确解析
+
+2. **数据一致性测试**
+   - [ ] 字段值在前后端传递过程中无丢失
+   - [ ] 日期时间格式转换正确
+   - [ ] 枚举值前后端理解一致
+
+3. **异常场景测试**
+   - [ ] 后端校验失败时前端能正确提示
+   - [ ] 网络异常时前端能优雅降级
+   - [ ] 权限不足时前端能正确处理
+
+### 联调工具推荐
+
+- **接口文档对比**：使用Swagger/Apifox生成接口文档，对比前后端理解
+- **Mock测试**：前端使用Mock数据先行开发，对齐数据结构
+- **抓包验证**：使用浏览器开发者工具/Charles验证实际请求响应
+```
+
+---
+
 ### 步骤 5：生成审查报告
 
-使用 `templates/code-review/template.md` 模板生成报告。
+使用 `.specify/templates/code-review/template.md` 模板生成报告。
 
 **报告内容**：
 - **【如有需求文档】需求摘要与符合性总结**
 - 调用链路图（来自子代理）
+- **【如有前后端代码】前后端接口对接审查结果**
 - 问题列表（按严重程度排序）
   - 代码质量问题
   - **【如有需求文档】需求偏离问题**
+  - **【如有前后端代码】接口对接问题**
 - 修复方案（含代码示例）
 - 每个问题关联 commit hash
+- **【如有前后端代码】联调测试建议**
 
 **报告路径**：`docs/review-results/code-review-YYYY-MM-DD-{author_name}.md`
+
+### 步骤 6：同步问题清单到远程服务器
+
+**⚠️ 重要：完成审查报告后，必须调用 upload-doc 将问题拆解并同步到远程服务器**
+
+#### 6.1 创建代码审查文档
+
+使用 `mcp_upload-doc_create_code_review_document` 工具创建完整的代码审查文档：
+
+```javascript
+mcp_upload-doc_create_code_review_document({
+  docName: "代码审查报告 - {需求名称或功能模块} - {日期}",
+  docContent: "{完整的审查报告内容（Markdown格式）}",
+  systemName: "{系统名称，如：ECP订单中心}",  // 可选
+  commitUser: "{提交用户姓名}"  // 可选
+})
+```
+
+**参数说明**：
+- `docName`：文档标题，建议格式：`代码审查报告 - [需求名称/功能模块] - YYYY-MM-DD`
+- `docContent`：完整的审查报告内容（Markdown格式字符串）
+- `systemName`：系统名称（可选），如"ECP订单中心"、"海外订单平台"等
+- `commitUser`：提交用户姓名（可选），如"张三"、"李四"等
+
+**返回值**：文档ID（documentId），用于后续创建问题清单
+
+#### 6.2 拆解并创建问题清单
+
+对审查报告中的**每个问题**，调用 `mcp_upload-doc_create_code_review_issue` 创建独立的问题条目：
+
+```javascript
+mcp_upload-doc_create_code_review_issue({
+  documentId: "{步骤6.1返回的documentId}",
+  issueTitle: "{问题标题}",
+  issueContent: "{问题详细说明（Markdown格式）}"
+})
+```
+
+**参数说明**：
+- `documentId`：步骤6.1返回的文档ID
+- `issueTitle`：问题标题，建议格式：`[严重程度] 问题简述 - 文件名`
+  - 例如：`[🔴严重] 循环中存在数据库查询 - OrderServiceImpl.java`
+  - 例如：`[🟡一般] 事务传播行为不当 - ProductService.java`
+- `issueContent`：问题的完整详细说明，必须包含：
+  - 问题描述
+  - 问题代码示例（❌）
+  - 修复方案及代码示例（✅）
+  - 影响说明
+  - 关联的commit hash
+  - **【如有需求】需求符合性说明**
+
+**执行规范**：
+1. **逐个问题调用**：对审查报告中的每个问题（🔴严重、🟡一般、🔵优化）都要调用此工具
+2. **内容完整性**：确保 `issueContent` 包含问题的所有关键信息（问题代码、修复方案、影响说明等）
+3. **与报告一致**：问题清单的内容必须与审查报告中的问题描述区域完全一致
+4. **调用顺序**：必须先调用步骤6.1创建文档，获得documentId后，才能调用步骤6.2创建问题
+
+#### 6.3 执行示例
+
+**完整流程**：
+
+```javascript
+// 步骤1：创建审查文档
+const result1 = await mcp_upload-doc_create_code_review_document({
+  docName: "代码审查报告 - 订单批量取消功能 - 2026-01-22",
+  docContent: `# 代码审查报告
+## 审查摘要
+...完整的Markdown报告内容...`,
+  systemName: "ECP订单中心",
+  commitUser: "张三"
+});
+
+const documentId = result1.documentId;  // 获取文档ID
+
+// 步骤2：拆解并创建问题清单（逐个问题）
+await mcp_upload-doc_create_code_review_issue({
+  documentId: documentId,
+  issueTitle: "[🔴严重] 循环中存在数据库查询 - OrderServiceImpl.java",
+  issueContent: `## 问题描述
+在批量取消订单的循环中，每次都调用了数据库查询...
+
+## 问题代码
+\`\`\`java
+❌ 当前代码
+for (String orderId : orderIds) {
+    Order order = orderMapper.selectById(orderId);  // 循环查询
+    ...
+}
+\`\`\`
+
+## 修复方案
+\`\`\`java
+✅ 修复后
+List<Order> orders = orderMapper.selectByIds(orderIds);  // 批量查询
+for (Order order : orders) {
+    ...
+}
+\`\`\`
+
+## 影响说明
+- 性能影响：100个订单将产生100次数据库查询
+- 修复收益：改为批量查询后性能提升90%
+
+## 关联Commit
+- abc123def - 实现订单批量取消功能
+`
+});
+
+await mcp_upload-doc_create_code_review_issue({
+  documentId: documentId,
+  issueTitle: "[🟡一般] 缺少事务控制 - OrderServiceImpl.java",
+  issueContent: `## 问题描述
+批量取消订单操作缺少事务控制...
+...
+`
+});
+
+// 继续为其他问题创建issue...
+```
+
+#### 6.4 同步完成确认
+
+完成所有问题同步后，输出确认信息：
+
+```markdown
+✅ 代码审查完成并已同步到远程服务器
+
+📄 审查文档ID：{documentId}
+📋 问题总数：{issueCount}
+  - 🔴 严重问题：{criticalCount}
+  - 🟡 一般问题：{normalCount}
+  - 🔵 优化建议：{optimizationCount}
+
+📁 本地报告：docs/review-results/code-review-YYYY-MM-DD-{author_name}.md
+```
 
 ---
 
@@ -360,16 +744,22 @@ runSubagent({
 - [ ] 调用 git-branch-sync（如需要）
 
 收集代码变更：
-- [ ] 调用 speckit.code-review-collect 子代理
-- [ ] 引导用户选择审查场景（按开发者/按需求/本地未提交）
-- [ ] 验证信息完整性
-- [ ] 接收变更记录和需求信息（如有）
+- [ ] 询问用户选择审查场景（按开发者/按需求/本地未提交）
+- [ ] 识别Git仓库结构
+  - [ ] 检查工作区根目录是否为Git仓库
+  - [ ] 如果不是，使用 file_search 自动扫描所有 `.git` 文件夹
+  - [ ] 提取并列出所有Git仓库路径
+- [ ] 根据场景引导用户提供必需信息
+- [ ] 主agent直接调用技能收集数据
+  - [ ] 场景A/B：使用 git-commit-log 技能（传入识别的仓库列表）
+  - [ ] 场景B（飞书文档）：使用 feishu-doc-reader 技能
+  - [ ] 场景C：使用 run_in_terminal 执行 git diff
+- [ ] 验证收集结果完整性
 - [ ] 确认提交记录或diff不为空
 
-需求文档理解（如子代理已收集则跳过）：
-- [ ] 检查是否已从子代理获得需求信息
-- [ ] 如未获得，识别需求文档来源（飞书/本地/直接输入）
-- [ ] 使用对应技能获取需求内容
+需求文档理解（如已获取则跳过）：
+- [ ] 识别需求文档来源（飞书/本地/直接输入）
+- [ ] 使用对应技能或工具获取需求内容
 - [ ] 提取功能需求、业务规则、性能要求等
 - [ ] 记录关键检查点
 
@@ -383,49 +773,80 @@ runSubagent({
 - [ ] 应用审查标准发现问题
 - [ ] 生成修复方案
 
+前后端接口对接审查（全栈场景）：
+- [ ] 检查变更记录是否同时包含前后端代码
+- [ ] 如是，识别前后端接口调用关系
+- [ ] 检查接口路径、HTTP方法、请求参数、响应结构一致性
+- [ ] 检查字段名、数据类型、枚举值对齐情况
+- [ ] 发现接口对接问题并生成修复方案
+- [ ] 在报告中添加接口对接审查章节
+- [ ] 提供联调测试建议
+
 生成报告：
 - [ ] 汇总所有提交的分析结果
 - [ ] 按模板生成报告
 - [ ] 保存到 docs/review-results/
+
+同步问题清单：
+- [ ] 调用 mcp_upload-doc_create_code_review_document 创建审查文档
+- [ ] 获取返回的 documentId
+- [ ] 逐个调用 mcp_upload-doc_create_code_review_issue 创建问题清单
+- [ ] 确保问题内容与报告一致
+- [ ] 确认所有问题都已同步
+- [ ] 输出同步完成确认信息
 ```
 
 ---
 
 ## 关键原则
 
-1. **三级子agent架构**
-   - speckit.code-review-collect：数据收集（交互式引导）
-   - speckit.code-review-analyze：路径追踪（自主调查）
-   - code-review（主）：质量评估（应用规范）
+1. **职责分工明确**
+   - code-review（主agent）：
+     - 数据收集（直接使用技能，不通过子agent）
+     - 需求理解（如有）
+     - 质量评估（应用审查规范）
+     - 前后端对接审查（全栈场景）
+   - speckit.code-review-analyze（子agent）：
+     - 路径追踪（自主调查）
+     - 客观事实分析（不做质量评价）
 
-2. **子agent是完整的独立agent**
-   - 可以单独使用
-   - 在Code Review场景下作为子agent
-   - 必须具备完全自主工作能力
+2. **技能调用权限**
+   - ✅ 主agent可以直接调用技能（git-commit-log、feishu-doc-reader等）
+   - ❌ 子agent不具备调用技能的能力
+   - 主agent收集数据后，分发给子agent进行调用链追踪
 
-3. **主agent不要微观管理**
+3. **主agent不要微观管理子agent**
    - 不要预先搜索所有代码
    - 不要梳理好调用关系
-   - 只给起点信息，信任子agent
+   - 只给起点信息（commit、文件、变更描述），信任子agent
 
-4. **清晰的职责边界**
-   - speckit.code-review-collect：数据收集（引导交互）
-   - speckit.code-review-analyze：路径追踪（使用工具自主调查）
-   - code-review（主）：质量评估（应用审查标准）
+4. **前后端对接审查重要性**
+   - 全栈开发必检项，防止接口对接问题
+   - 重点检查字段匹配、数据类型、枚举值对齐
+   - 提供明确的修复方案和联调测试建议
 
 ---
 
 ## 技能依赖
 
-### 必需技能
-1. **runSubagent** - 调用子代理
-   - speckit.code-review-collect（数据收集）
+### 主agent直接使用的技能
+1. **git-commit-log** - 获取提交记录
+   - 场景A：按开发者审查
+   - 场景B：按需求审查
+   
+2. **feishu-doc-reader** - 读取飞书需求文档
+   - 场景B：从飞书获取需求文档
+   
+3. **git-branch-sync** - 同步代码（可选）
+   - 在获取提交记录前执行
+
+### 子代理调用
+4. **runSubagent** - 调用子代理
    - speckit.code-review-analyze（路径追踪）
 
-### 子代理内部使用技能
-2. **git-commit-log** - （由collect子代理调用）获取提交记录
-3. **feishu-doc-reader** - （由collect子代理调用）读取飞书需求文档
-4. **git-branch-sync** - 同步代码（可选）
+### 远程同步工具
+5. **mcp_upload-doc_create_code_review_document** - 创建代码审查文档
+6. **mcp_upload-doc_create_code_review_issue** - 创建代码审查问题清单
 
 ---
 
@@ -483,9 +904,14 @@ runSubagent({
 
 ---
 
-**版本**：1.2  
-**更新日期**：2026-01-08  
+**版本**：1.3  
+**更新日期**：2026-01-23  
 **维护者**：皮皮芳  
 **变更说明**：
+- v1.3: 
+  - 🔧 修复：主agent直接使用技能收集代码变更（移除collect子agent调用，因子agent不具备技能调用能力）
+  - ✨ 新增：前后端接口对接审查（全栈开发场景的联调review）
+  - 🚀 增强：自动识别多仓库结构（使用file_search扫描所有.git文件夹，支持多子项目场景）
+  - ✨ 新增：前后端接口对接审查（全栈开发场景的联调review）
 - v1.2: 新增需求文档理解和需求符合性审查功能
 - v1.1: 引入 Logic Analysis 子代理，职责分离（子代理追踪路径，主代理审查质量）
