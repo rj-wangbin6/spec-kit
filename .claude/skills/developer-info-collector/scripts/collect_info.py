@@ -5,6 +5,7 @@
 """
 
 import os
+import sys
 import json
 import subprocess
 import argparse
@@ -12,6 +13,11 @@ import re
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Optional, Tuple
+
+# 修复Windows控制台编码问题
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
 
 
 class DeveloperInfoCollector:
@@ -74,26 +80,44 @@ class DeveloperInfoCollector:
                 return
             
             try:
+                self.log(f"扫描目录 [深度{current_depth}]: {current_path}", "INFO")
+                
                 # 检查当前目录是否是Git项目
                 git_dir = current_path / ".git"
                 if git_dir.exists() and git_dir.is_dir():
                     projects.append(current_path)
-                    self.log(f"找到Git项目: {current_path}")
+                    self.log(f"✓ 找到Git项目: {current_path}", "INFO")
                     return  # 找到后不再深入子目录
                 
                 # 扫描子目录
                 if current_depth < self.depth:
-                    for entry in current_path.iterdir():
-                        if entry.is_dir() and not entry.name.startswith('.'):
-                            scan_directory(entry, current_depth + 1)
-            except PermissionError:
-                self.log(f"无权限访问: {current_path}", "WARN")
+                    try:
+                        subdirs = list(current_path.iterdir())
+                        self.log(f"  发现 {len(subdirs)} 个子项", "INFO")
+                        for entry in subdirs:
+                            try:
+                                if entry.is_dir() and not entry.name.startswith('.'):
+                                    scan_directory(entry, current_depth + 1)
+                            except Exception as e:
+                                self.log(f"  跳过子目录 {entry.name}: {type(e).__name__} - {e}", "ERROR")
+                    except Exception as e:
+                        self.log(f"无法遍历子目录 {current_path}: {type(e).__name__} - {e}", "ERROR")
+            except PermissionError as e:
+                self.log(f"无权限访问: {current_path} - {e}", "WARN")
             except Exception as e:
-                self.log(f"扫描失败 {current_path}: {e}", "ERROR")
+                self.log(f"扫描失败 {current_path}: {type(e).__name__} - {e}", "ERROR")
+                import traceback
+                self.log(f"详细堆栈:\n{traceback.format_exc()}", "ERROR")
         
-        scan_directory(self.base_dir, 1)
+        try:
+            scan_directory(self.base_dir, 1)
+        except Exception as e:
+            self.log(f"扫描根目录失败: {type(e).__name__} - {e}", "ERROR")
+            import traceback
+            self.log(f"详细堆栈:\n{traceback.format_exc()}", "ERROR")
+        
         self.git_projects = projects
-        self.log(f"扫描完成，找到 {len(projects)} 个Git项目")
+        self.log(f"扫描完成，找到 {len(projects)} 个Git项目", "INFO")
         return projects
     
     def get_developer_info(self) -> Dict:
@@ -150,8 +174,63 @@ class DeveloperInfoCollector:
         
         # 提取最后一部分作为项目名
         project_name = url.split('/')[-1]
-        return project_name
-    
+        return project_name    
+    def get_contributors(self, project_path: Path) -> List[Dict]:
+        """
+        获取仓库的所有提交者列表
+        
+        Args:
+            project_path: 项目路径
+            
+        Returns:
+            提交者列表，每个元素包含 name 和 email
+        """
+        try:
+            self.log(f"获取提交者列表: {project_path.name}")
+            
+            # 获取所有提交者（去重）
+            success, output = self.run_command(
+                ["git", "log", "--all", "--format=%an|%ae"],
+                cwd=project_path
+            )
+            
+            if not success or not output:
+                self.log(f"项目 {project_path.name} 无提交记录", "WARN")
+                return []
+            
+            # 解析并去重
+            contributors_set = set()
+            contributors = []
+            
+            for line in output.split('\n'):
+                try:
+                    line = line.strip()
+                    if not line or '|' not in line:
+                        continue
+                    
+                    parts = line.split('|')
+                    if len(parts) != 2:
+                        continue
+                    
+                    name, email = parts[0].strip(), parts[1].strip()
+                    
+                    # 使用email作为唯一标识去重
+                    if email and email not in contributors_set:
+                        contributors_set.add(email)
+                        contributors.append({
+                            "name": name,
+                            "email": email
+                        })
+                except Exception as e:
+                    self.log(f"解析提交者行失败: {line[:50]} - {type(e).__name__}: {e}", "ERROR")
+            
+            self.log(f"找到 {len(contributors)} 个提交者")
+            return contributors
+        except Exception as e:
+            self.log(f"获取提交者列表失败 {project_path.name}: {type(e).__name__} - {e}", "ERROR")
+            import traceback
+            self.log(f"详细堆栈:\n{traceback.format_exc()}", "ERROR")
+            return []    
     def get_project_info(self, project_path: Path) -> Optional[Dict]:
         """
         获取单个项目的详细信息
@@ -166,64 +245,41 @@ class DeveloperInfoCollector:
         
         try:
             # 获取远程仓库地址
-            success, remote_url = self.run_command(
-                ["git", "config", "--get", "remote.origin.url"],
-                cwd=project_path
-            )
-            if not success or not remote_url:
+            try:
+                success, remote_url = self.run_command(
+                    ["git", "config", "--get", "remote.origin.url"],
+                    cwd=project_path
+                )
+                if not success or not remote_url:
+                    remote_url = ""
+                    self.log(f"项目 {project_path.name} 未配置远程仓库", "WARN")
+            except Exception as e:
+                self.log(f"获取远程URL失败 {project_path.name}: {type(e).__name__} - {e}", "ERROR")
                 remote_url = ""
-                self.log(f"项目 {project_path.name} 未配置远程仓库", "WARN")
             
             # 提取项目名
             project_name = self.extract_project_name(remote_url)
             if project_name == "Unknown":
                 project_name = project_path.name  # 使用目录名作为备选
             
-            # 获取当前分支
-            success, current_branch = self.run_command(
-                ["git", "branch", "--show-current"],
-                cwd=project_path
-            )
-            if not success:
-                current_branch = "Unknown"
-            
-            # 检查本地修改状态
-            success, status_output = self.run_command(
-                ["git", "status", "--porcelain"],
-                cwd=project_path
-            )
-            has_uncommitted_changes = bool(status_output)
-            uncommitted_files = len(status_output.split('\n')) if status_output else 0
-            
-            # 获取最近一次提交
-            success, log_output = self.run_command(
-                ["git", "log", "-1", "--pretty=format:%H|%an|%ai|%s"],
-                cwd=project_path
-            )
-            
-            last_commit = {}
-            if success and log_output:
-                parts = log_output.split('|')
-                if len(parts) == 4:
-                    last_commit = {
-                        "hash": parts[0][:7],  # 短hash
-                        "author": parts[1],
-                        "date": parts[2][:19],  # 只保留到秒
-                        "message": parts[3]
-                    }
+            # 获取所有提交者列表
+            try:
+                contributors = self.get_contributors(project_path)
+            except Exception as e:
+                self.log(f"获取贡献者失败 {project_path.name}: {type(e).__name__} - {e}", "ERROR")
+                contributors = []
             
             return {
                 "project_name": project_name,
                 "project_path": str(project_path).replace('\\', '/'),
                 "remote_url": remote_url,
-                "current_branch": current_branch,
-                "has_uncommitted_changes": has_uncommitted_changes,
-                "uncommitted_files": uncommitted_files,
-                "last_commit": last_commit
+                "contributors": contributors
             }
             
         except Exception as e:
-            self.log(f"获取项目信息失败 {project_path.name}: {e}", "ERROR")
+            self.log(f"获取项目信息失败 {project_path.name}: {type(e).__name__} - {e}", "ERROR")
+            import traceback
+            self.log(f"详细堆栈:\n{traceback.format_exc()}", "ERROR")
             return None
     
     def collect_all_info(self) -> Dict:
@@ -233,35 +289,77 @@ class DeveloperInfoCollector:
         Returns:
             完整的信息字典
         """
-        # 扫描Git项目
-        projects = self.find_git_projects()
-        
-        # 获取开发者信息
-        developer_info = self.get_developer_info()
-        
-        # 收集所有项目信息
-        projects_info = []
-        projects_with_changes = 0
-        
-        for project_path in projects:
-            info = self.get_project_info(project_path)
-            if info:
-                projects_info.append(info)
-                if info.get('has_uncommitted_changes'):
-                    projects_with_changes += 1
-        
-        # 构建完整数据
-        return {
-            "scan_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "base_directory": str(self.base_dir).replace('\\', '/'),
-            "scan_depth": self.depth,
-            "developer": developer_info,
-            "projects": projects_info,
-            "summary": {
-                "total_projects": len(projects_info),
-                "projects_with_changes": projects_with_changes
+        try:
+            # 扫描Git项目
+            self.log("=" * 60, "INFO")
+            self.log("步骤1: 扫描Git项目", "INFO")
+            self.log("=" * 60, "INFO")
+            projects = self.find_git_projects()
+            
+            # 获取开发者信息
+            self.log("\n" + "=" * 60, "INFO")
+            self.log("步骤2: 获取开发者信息", "INFO")
+            self.log("=" * 60, "INFO")
+            developer_info = self.get_developer_info()
+            
+            # 收集所有项目信息
+            self.log("\n" + "=" * 60, "INFO")
+            self.log("步骤3: 收集项目详细信息", "INFO")
+            self.log("=" * 60, "INFO")
+            projects_info = []
+            all_contributors = {}  # email -> {name, email, projects[]}
+            
+            for i, project_path in enumerate(projects, 1):
+                try:
+                    self.log(f"\n[{i}/{len(projects)}] 处理项目: {project_path.name}", "INFO")
+                    info = self.get_project_info(project_path)
+                    if info:
+                        project_name = info['project_name']
+                        contributors = info.pop('contributors')  # 移除contributors
+                        projects_info.append(info)
+                        
+                        # 收集所有开发者并记录他们参与的项目
+                        for contributor in contributors:
+                            email = contributor['email']
+                            if email not in all_contributors:
+                                all_contributors[email] = {
+                                    'name': contributor['name'],
+                                    'email': email,
+                                    'projects': []
+                                }
+                            all_contributors[email]['projects'].append(project_name)
+                        
+                        self.log(f"✓ 完成: {project_path.name}", "INFO")
+                    else:
+                        self.log(f"✗ 跳过: {project_path.name} (获取信息失败)", "WARN")
+                except Exception as e:
+                    self.log(f"✗ 处理项目失败 {project_path.name}: {type(e).__name__} - {e}", "ERROR")
+                    import traceback
+                    self.log(f"详细堆栈:\n{traceback.format_exc()}", "ERROR")
+            
+            # 转换为列表并按email排序
+            developers_list = sorted(all_contributors.values(), key=lambda x: x['email'])
+            
+            # 构建完整数据
+            return {
+                "scan_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "base_directory": str(self.base_dir).replace('\\', '/'),
+                "developer": developer_info,
+                "developers": developers_list,
+                "projects": projects_info
             }
-        }
+        except Exception as e:
+            self.log(f"收集信息失败: {type(e).__name__} - {e}", "ERROR")
+            import traceback
+            self.log(f"详细堆栈:\n{traceback.format_exc()}", "ERROR")
+            # 返回一个空的但有效的数据结构
+            return {
+                "scan_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "base_directory": str(self.base_dir).replace('\\', '/'),
+                "developer": {"name": "Unknown", "email": "Unknown", "git_version": "Unknown"},
+                "developers": [],
+                "projects": []
+            }
     
     def save_to_file(self, data: Dict, output_path: str, pretty: bool = False):
         """
@@ -282,93 +380,92 @@ class DeveloperInfoCollector:
     def print_summary(self, data: Dict):
         """打印摘要信息"""
         print("\n" + "=" * 60)
-        print("开发者信息收集完成")
+        print("扫描完成")
         print("=" * 60)
-        print(f"开发者: {data['developer']['name']} <{data['developer']['email']}>")
+        print(f"扫描时间: {data['scan_time']}")
         print(f"扫描目录: {data['base_directory']}")
-        print(f"扫描深度: {data['scan_depth']} 层")
-        print(f"找到项目: {data['summary']['total_projects']} 个")
-        print(f"有未提交修改: {data['summary']['projects_with_changes']} 个")
+        print(f"找到项目: {len(data['projects'])} 个")
+        print(f"找到开发者: {len(data['developers'])} 人")
         print("=" * 60)
-        
-        if data['projects']:
-            print("\n项目列表:")
-            for i, proj in enumerate(data['projects'], 1):
-                status = "🔴 有修改" if proj['has_uncommitted_changes'] else "✅ 干净"
-                print(f"{i}. [{status}] {proj['project_name']} ({proj['current_branch']})")
-        print()
 
 
 def main():
     """主函数"""
-    parser = argparse.ArgumentParser(
-        description="开发者信息收集工具 - Code Review信息准备",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
+    try:
+        parser = argparse.ArgumentParser(
+            description="开发者信息收集工具 - Code Review信息准备",
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            epilog="""
 示例用法:
   python collect_info.py
   python collect_info.py --base-dir "D:\\projects" --depth 2
   python collect_info.py --output dev_info.json --pretty
   python collect_info.py -v
-        """
-    )
+            """
+        )
+        
+        parser.add_argument(
+            '--base-dir', '-d',
+            default='.',
+            help='扫描的基础目录（默认: 当前目录）'
+        )
+        
+        parser.add_argument(
+            '--depth',
+            type=int,
+            default=2,
+            choices=range(1, 6),
+            metavar='1-5',
+            help='扫描深度，1-5层（默认: 2）'
+        )
+        
     
-    parser.add_argument(
-        '--base-dir', '-d',
-        default='.',
-        help='扫描的基础目录（默认: 当前目录）'
-    )
-    
-    parser.add_argument(
-        '--depth',
-        type=int,
-        default=3,
-        choices=range(1, 6),
-        metavar='1-5',
-        help='扫描深度，1-5层（默认: 3）'
-    )
-    
-    parser.add_argument(
-        '--output', '-o',
-        help='输出JSON文件路径（默认: developer_info_{timestamp}.json）'
-    )
-    
-    parser.add_argument(
-        '--pretty', '-p',
-        action='store_true',
-        help='美化JSON输出'
-    )
-    
-    parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='显示详细日志'
-    )
-    
-    args = parser.parse_args()
-    
-    # 创建收集器
-    collector = DeveloperInfoCollector(
-        base_dir=args.base_dir,
-        depth=args.depth,
-        verbose=args.verbose
-    )
-    
-    # 收集信息
-    data = collector.collect_all_info()
-    
-    # 确定输出文件名
-    if args.output:
-        output_path = args.output
-    else:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_path = f"developer_info_{timestamp}.json"
-    
-    # 保存到文件
-    collector.save_to_file(data, output_path, pretty=args.pretty)
-    
-    # 打印摘要
-    collector.print_summary(data)
+        
+        parser.add_argument(
+            '--pretty', '-p',
+            action='store_true',
+            help='美化JSON输出'
+        )
+        
+        parser.add_argument(
+            '--verbose', '-v',
+            action='store_true',
+            help='显示详细日志'
+        )
+        
+        args = parser.parse_args()
+        
+        # 创建收集器
+        collector = DeveloperInfoCollector(
+            base_dir=args.base_dir,
+            depth=args.depth,
+            verbose=args.verbose
+        )
+        
+        # 收集信息
+        data = collector.collect_all_info()
+        
+        # 打印摘要
+        collector.print_summary(data)
+        
+        # 输出JSON到控制台
+        print("\n" + "=" * 60)
+        print("JSON数据")
+        print("=" * 60)
+        indent = 2 if args.pretty else None
+        print(json.dumps(data, ensure_ascii=False, indent=indent))
+        print("\n" + "=" * 60)
+        print("完成")
+        print("=" * 60)
+        
+    except KeyboardInterrupt:
+        print("\n\n[WARN] 用户中断执行")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\n\n[ERROR] 程序执行失败: {type(e).__name__} - {e}")
+        import traceback
+        print(f"[ERROR] 详细堆栈:\n{traceback.format_exc()}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
