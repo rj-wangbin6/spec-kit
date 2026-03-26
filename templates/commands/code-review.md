@@ -848,6 +848,20 @@ runSubagent({
 5. **mcp_upload-doc_create_code_review_document** - 创建代码审查文档
 6. **mcp_upload-doc_create_code_review_issue** - 创建代码审查问题清单
 
+
+工具名称：create_code_review_document     
+docName          完整的代码评审结果的文档标题
+docContent       完整的代码评审结果的文档内容
+projectName     评审代码所属的项目名称: 取gitlab项目名称 projectName
+createUser        当前文档数据的创建人，通常是用户邮箱
+commitUser       编写代码的提交人提交用户名称
+工具名称：create_code_review_issue
+documentId      代码评审文档ID,需要先创建导入代码评审文档ID
+issueTitle         完整的每一个代码评审结果文档中的问题标题名称
+issueContent    完整的每一个代码评审结果文档中的问题详细说明内容，需要和代码评审结果文档中的问题描述区域的内容一致
+projectName      评审代码所属的项目名称 取gitlab项目名称 projectName
+issueCategory    评审代码问题的问题分类，通常是4-8个字说明
+
 ---
 
 ## 审查边界
