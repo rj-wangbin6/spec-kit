@@ -987,7 +987,6 @@ def move_skills_to_claude(project_path: Path, verbose: bool = True, tracker: Ste
         elif verbose:
             console.print(f"[yellow]Warning: Could not move skills directory: {e}[/yellow]")
 
-def download_and_extract_template(project_path: Path, ai_assistant: str, script_type: str, is_current_dir: bool = False, *, verbose: bool = True, tracker: StepTracker | None = None, client: httpx.Client = None, debug: bool = False, github_token: str = None) -> Path:
 def download_and_extract_template(
     project_path: Path,
     ai_assistant: str,
