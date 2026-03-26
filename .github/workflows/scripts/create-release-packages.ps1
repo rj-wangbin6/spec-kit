@@ -44,8 +44,8 @@ param(
 $ErrorActionPreference = "Stop"
 
 # Validate version format
-if ($Version -notmatch '^v\d+\.\d+\.\d+$') {
-    Write-Error "Version must look like v0.0.0"
+if ($Version -notmatch '^[rv]\d+\.\d+\.\d+$') {
+    Write-Error "Version must look like v0.0.0 or r0.0.0"
     exit 1
 }
 

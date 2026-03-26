@@ -12,8 +12,9 @@ fi
 
 VERSION="$1"
 
-# Remove 'v' prefix from version for release title
-VERSION_NO_V=${VERSION#v}
+# Remove 'v' or 'r' prefix from version for release title
+VERSION_NO_PREFIX=${VERSION#v}
+VERSION_NO_PREFIX=${VERSION_NO_PREFIX#r}
 
 gh release create "$VERSION" \
   .genreleases/spec-kit-template-copilot-sh-"$VERSION".zip \
@@ -68,5 +69,5 @@ gh release create "$VERSION" \
   .genreleases/spec-kit-template-iflow-ps-"$VERSION".zip \
   .genreleases/spec-kit-template-generic-sh-"$VERSION".zip \
   .genreleases/spec-kit-template-generic-ps-"$VERSION".zip \
-  --title "Spec Kit Templates - $VERSION_NO_V" \
+  --title "Spec Kit Templates - $VERSION_NO_PREFIX" \
   --notes-file release_notes.md
