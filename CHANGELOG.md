@@ -99,7 +99,7 @@
 
 ### Changed
 
-- Added February 2026 newsletter (#1812)
+- Added February 2026 newsletter (#1812)git
 - feat: add Kimi Code CLI agent support (#1790)
 - docs: fix broken links in quickstart guide (#1759) (#1797)
 - docs: add catalog cli help documentation (#1793) (#1794)
