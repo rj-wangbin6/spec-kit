@@ -1,6 +1,6 @@
 [project]
 name = "specify-cli"
-version = "0.0.72"
+version = "0.0.73"
 description = "Specify CLI, part of GitHub Spec Kit. A tool to bootstrap your projects for Spec-Driven Development (SDD)."
 requires-python = ">=3.11"
 dependencies = [
@@ -39,6 +39,12 @@ packages = ["src/specify_cli"]
 "templates/vscode-settings.json" = "specify_cli/core_pack/templates/vscode-settings.json"
 # Command templates
 "templates/commands" = "specify_cli/core_pack/commands"
+# Code review templates
+"templates/code-review" = "specify_cli/core_pack/templates/code-review"
+"templates/code-review-c" = "specify_cli/core_pack/templates/code-review-c"
+# Skills
+"templates/skills" = "specify_cli/core_pack/templates/skills"
+# Scripts
 "scripts/bash" = "specify_cli/core_pack/scripts/bash"
 "scripts/powershell" = "specify_cli/core_pack/scripts/powershell"
 ".github/workflows/scripts/create-release-packages.sh" = "specify_cli/core_pack/release_scripts/create-release-packages.sh"

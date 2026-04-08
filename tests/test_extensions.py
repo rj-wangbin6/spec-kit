@@ -56,7 +56,7 @@ def valid_manifest_data():
             "license": "MIT",
         },
         "requires": {
-            "speckit_version": ">=0.1.0",
+            "speckit_version": ">=0.0.73",
             "commands": ["speckit.tasks"],
         },
         "provides": {
@@ -546,7 +546,7 @@ class TestExtensionManager:
         manifest = ExtensionManifest(extension_dir / "extension.yml")
 
         # Should not raise
-        result = manager.check_compatibility(manifest, "0.1.0")
+        result = manager.check_compatibility(manifest, "0.0.73")
         assert result is True
 
     def test_check_compatibility_invalid(self, extension_dir, project_dir):
@@ -564,7 +564,7 @@ class TestExtensionManager:
 
         manifest = manager.install_from_directory(
             extension_dir,
-            "0.1.0",
+            "0.0.73",
             register_commands=False  # Skip command registration for now
         )
 
@@ -582,18 +582,18 @@ class TestExtensionManager:
         manager = ExtensionManager(project_dir)
 
         # Install once
-        manager.install_from_directory(extension_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(extension_dir, "0.0.73", register_commands=False)
 
         # Try to install again
         with pytest.raises(ExtensionError, match="already installed"):
-            manager.install_from_directory(extension_dir, "0.1.0", register_commands=False)
+            manager.install_from_directory(extension_dir, "0.0.73", register_commands=False)
 
     def test_remove_extension(self, extension_dir, project_dir):
         """Test removing an installed extension."""
         manager = ExtensionManager(project_dir)
 
         # Install extension
-        manager.install_from_directory(extension_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(extension_dir, "0.0.73", register_commands=False)
 
         ext_dir = project_dir / ".specify" / "extensions" / "test-ext"
         assert ext_dir.exists()
@@ -620,7 +620,7 @@ class TestExtensionManager:
         assert len(manager.list_installed()) == 0
 
         # Install extension
-        manager.install_from_directory(extension_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(extension_dir, "0.0.73", register_commands=False)
 
         # Should have one extension
         installed = manager.list_installed()
@@ -636,7 +636,7 @@ class TestExtensionManager:
         manager = ExtensionManager(project_dir)
 
         # Install extension
-        manager.install_from_directory(extension_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(extension_dir, "0.0.73", register_commands=False)
 
         # Create a config file
         ext_dir = project_dir / ".specify" / "extensions" / "test-ext"
@@ -804,7 +804,7 @@ $ARGUMENTS
                 "description": "Test",
             },
             "requires": {
-                "speckit_version": ">=0.1.0",
+                "speckit_version": ">=0.0.73",
             },
             "provides": {
                 "commands": [
@@ -902,7 +902,7 @@ $ARGUMENTS
                 "version": "1.0.0",
                 "description": "Test",
             },
-            "requires": {"speckit_version": ">=0.1.0"},
+            "requires": {"speckit_version": ">=0.0.73"},
             "provides": {
                 "commands": [
                     {
@@ -971,7 +971,7 @@ Agent __AGENT__
                 "version": "1.0.0",
                 "description": "Test",
             },
-            "requires": {"speckit_version": ">=0.1.0"},
+            "requires": {"speckit_version": ">=0.0.73"},
             "provides": {
                 "commands": [
                     {
@@ -1020,7 +1020,7 @@ Agent __AGENT__
                 "version": "1.0.0",
                 "description": "Test",
             },
-            "requires": {"speckit_version": ">=0.1.0"},
+            "requires": {"speckit_version": ">=0.0.73"},
             "provides": {
                 "commands": [
                     {
@@ -1085,7 +1085,7 @@ Then {AGENT_SCRIPT}
                 "version": "1.0.0",
                 "description": "Test",
             },
-            "requires": {"speckit_version": ">=0.1.0"},
+            "requires": {"speckit_version": ">=0.0.73"},
             "provides": {
                 "commands": [
                     {
@@ -1192,7 +1192,7 @@ Then {AGENT_SCRIPT}
                 "version": "1.0.0",
                 "description": "Test",
             },
-            "requires": {"speckit_version": ">=0.1.0"},
+            "requires": {"speckit_version": ">=0.0.73"},
             "provides": {
                 "commands": [
                     {
@@ -1288,7 +1288,7 @@ class TestIntegration:
         # Install
         manager.install_from_directory(
             extension_dir,
-            "0.1.0",
+            "0.0.73",
             register_commands=True
         )
 
@@ -1326,7 +1326,7 @@ class TestIntegration:
         agents_dir.mkdir(parents=True)
 
         manager = ExtensionManager(project_dir)
-        manager.install_from_directory(extension_dir, "0.1.0", register_commands=True)
+        manager.install_from_directory(extension_dir, "0.0.73", register_commands=True)
 
         # Verify copilot was detected and registered
         metadata = manager.registry.get("test-ext")
@@ -1362,7 +1362,7 @@ class TestIntegration:
                     "version": "1.0.0",
                     "description": f"Extension {i}",
                 },
-                "requires": {"speckit_version": ">=0.1.0"},
+                "requires": {"speckit_version": ">=0.0.73"},
                 "provides": {
                     "commands": [
                         {
@@ -1382,8 +1382,8 @@ class TestIntegration:
         manager = ExtensionManager(project_dir)
 
         # Install both
-        manager.install_from_directory(temp_dir / "ext1", "0.1.0", register_commands=False)
-        manager.install_from_directory(temp_dir / "ext2", "0.1.0", register_commands=False)
+        manager.install_from_directory(temp_dir / "ext1", "0.0.73", register_commands=False)
+        manager.install_from_directory(temp_dir / "ext2", "0.0.73", register_commands=False)
 
         # Verify both installed
         installed = manager.list_installed()
@@ -2273,7 +2273,7 @@ class TestExtensionIgnore:
         (proj_dir / ".specify").mkdir()
 
         manager = ExtensionManager(proj_dir)
-        manager.install_from_directory(ext_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(ext_dir, "0.0.73", register_commands=False)
 
         dest = proj_dir / ".specify" / "extensions" / "test-ext"
         assert (dest / "README.md").exists()
@@ -2298,7 +2298,7 @@ class TestExtensionIgnore:
         (proj_dir / ".specify").mkdir()
 
         manager = ExtensionManager(proj_dir)
-        manager.install_from_directory(ext_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(ext_dir, "0.0.73", register_commands=False)
 
         dest = proj_dir / ".specify" / "extensions" / "test-ext"
         # Included
@@ -2327,7 +2327,7 @@ class TestExtensionIgnore:
         (proj_dir / ".specify").mkdir()
 
         manager = ExtensionManager(proj_dir)
-        manager.install_from_directory(ext_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(ext_dir, "0.0.73", register_commands=False)
 
         dest = proj_dir / ".specify" / "extensions" / "test-ext"
         assert (dest / "README.md").exists()
@@ -2348,7 +2348,7 @@ class TestExtensionIgnore:
         (proj_dir / ".specify").mkdir()
 
         manager = ExtensionManager(proj_dir)
-        manager.install_from_directory(ext_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(ext_dir, "0.0.73", register_commands=False)
 
         dest = proj_dir / ".specify" / "extensions" / "test-ext"
         assert (dest / "README.md").exists()
@@ -2367,7 +2367,7 @@ class TestExtensionIgnore:
         (proj_dir / ".specify").mkdir()
 
         manager = ExtensionManager(proj_dir)
-        manager.install_from_directory(ext_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(ext_dir, "0.0.73", register_commands=False)
 
         dest = proj_dir / ".specify" / "extensions" / "test-ext"
         assert (dest / "extension.yml").exists()
@@ -2391,7 +2391,7 @@ class TestExtensionIgnore:
         (proj_dir / ".specify").mkdir()
 
         manager = ExtensionManager(proj_dir)
-        manager.install_from_directory(ext_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(ext_dir, "0.0.73", register_commands=False)
 
         dest = proj_dir / ".specify" / "extensions" / "test-ext"
         assert (dest / "docs" / "guide.md").exists()
@@ -2411,7 +2411,7 @@ class TestExtensionIgnore:
         (proj_dir / ".specify").mkdir()
 
         manager = ExtensionManager(proj_dir)
-        manager.install_from_directory(ext_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(ext_dir, "0.0.73", register_commands=False)
 
         dest = proj_dir / ".specify" / "extensions" / "test-ext"
         # Everything should still be copied — the '..' pattern matches nothing inside
@@ -2433,7 +2433,7 @@ class TestExtensionIgnore:
         (proj_dir / ".specify").mkdir()
 
         manager = ExtensionManager(proj_dir)
-        manager.install_from_directory(ext_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(ext_dir, "0.0.73", register_commands=False)
 
         dest = proj_dir / ".specify" / "extensions" / "test-ext"
         # Nothing matches — /etc/passwd is anchored to root and there's no 'etc' dir
@@ -2454,7 +2454,7 @@ class TestExtensionIgnore:
         (proj_dir / ".specify").mkdir()
 
         manager = ExtensionManager(proj_dir)
-        manager.install_from_directory(ext_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(ext_dir, "0.0.73", register_commands=False)
 
         dest = proj_dir / ".specify" / "extensions" / "test-ext"
         assert (dest / "README.md").exists()
@@ -2480,7 +2480,7 @@ class TestExtensionIgnore:
         (proj_dir / ".specify").mkdir()
 
         manager = ExtensionManager(proj_dir)
-        manager.install_from_directory(ext_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(ext_dir, "0.0.73", register_commands=False)
 
         dest = proj_dir / ".specify" / "extensions" / "test-ext"
         assert (dest / "docs" / "guide.md").exists()
@@ -2503,7 +2503,7 @@ class TestExtensionIgnore:
         (proj_dir / ".specify").mkdir()
 
         manager = ExtensionManager(proj_dir)
-        manager.install_from_directory(ext_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(ext_dir, "0.0.73", register_commands=False)
 
         dest = proj_dir / ".specify" / "extensions" / "test-ext"
         # docs/*.draft.md should only match directly inside docs/, NOT subdirs
@@ -2528,7 +2528,7 @@ class TestExtensionIgnore:
         (proj_dir / ".specify").mkdir()
 
         manager = ExtensionManager(proj_dir)
-        manager.install_from_directory(ext_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(ext_dir, "0.0.73", register_commands=False)
 
         dest = proj_dir / ".specify" / "extensions" / "test-ext"
         assert not (dest / "docs" / "api.draft.md").exists()
@@ -2553,7 +2553,7 @@ class TestExtensionIgnore:
         (proj_dir / ".specify").mkdir()
 
         manager = ExtensionManager(proj_dir)
-        manager.install_from_directory(ext_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(ext_dir, "0.0.73", register_commands=False)
 
         dest = proj_dir / ".specify" / "extensions" / "test-ext"
         # docs/*.md excludes all .md in docs, but !docs/api.md re-includes it
@@ -2640,7 +2640,7 @@ class TestExtensionUpdateCLI:
                 "version": version,
                 "description": "A test extension",
             },
-            "requires": {"speckit_version": ">=0.1.0"},
+            "requires": {"speckit_version": ">=0.0.73"},
             "provides": {
                 "commands": [
                     {
@@ -2680,7 +2680,7 @@ class TestExtensionUpdateCLI:
                 "version": version,
                 "description": "A test extension",
             },
-            "requires": {"speckit_version": ">=0.1.0"},
+            "requires": {"speckit_version": ">=0.0.73"},
             "provides": {"commands": [{"name": "speckit.test.hello", "file": "commands/hello.md"}]},
         }
 
@@ -2701,7 +2701,7 @@ class TestExtensionUpdateCLI:
 
         manager = ExtensionManager(project_dir)
         v1_dir = self._create_extension_source(tmp_path, "1.0.0", include_config=True)
-        manager.install_from_directory(v1_dir, "0.1.0")
+        manager.install_from_directory(v1_dir, "0.0.73")
         original_installed_at = manager.registry.get("test-ext")["installed_at"]
         original_config_content = (
             project_dir / ".specify" / "extensions" / "test-ext" / "linear-config.yml"
@@ -2750,7 +2750,7 @@ class TestExtensionUpdateCLI:
 
         manager = ExtensionManager(project_dir)
         v1_dir = self._create_extension_source(tmp_path, "1.0.0")
-        manager.install_from_directory(v1_dir, "0.1.0")
+        manager.install_from_directory(v1_dir, "0.0.73")
 
         backup_registry_entry = manager.registry.get("test-ext")
         hooks_before = yaml.safe_load((project_dir / ".specify" / "extensions.yml").read_text())
@@ -2810,7 +2810,7 @@ class TestExtensionListCLI:
 
         # Install the extension using the manager
         manager = ExtensionManager(project_dir)
-        manager.install_from_directory(extension_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(extension_dir, "0.0.73", register_commands=False)
 
         with patch.object(Path, "cwd", return_value=project_dir):
             result = runner.invoke(app, ["extension", "list"])
@@ -2943,7 +2943,7 @@ class TestExtensionPriority:
     def test_install_with_priority(self, extension_dir, project_dir):
         """Test that install_from_directory stores priority."""
         manager = ExtensionManager(project_dir)
-        manager.install_from_directory(extension_dir, "0.1.0", register_commands=False, priority=5)
+        manager.install_from_directory(extension_dir, "0.0.73", register_commands=False, priority=5)
 
         metadata = manager.registry.get("test-ext")
         assert metadata["priority"] == 5
@@ -2951,7 +2951,7 @@ class TestExtensionPriority:
     def test_install_default_priority(self, extension_dir, project_dir):
         """Test that install_from_directory uses default priority of 10."""
         manager = ExtensionManager(project_dir)
-        manager.install_from_directory(extension_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(extension_dir, "0.0.73", register_commands=False)
 
         metadata = manager.registry.get("test-ext")
         assert metadata["priority"] == 10
@@ -2959,7 +2959,7 @@ class TestExtensionPriority:
     def test_list_installed_includes_priority(self, extension_dir, project_dir):
         """Test that list_installed includes priority in returned data."""
         manager = ExtensionManager(project_dir)
-        manager.install_from_directory(extension_dir, "0.1.0", register_commands=False, priority=3)
+        manager.install_from_directory(extension_dir, "0.0.73", register_commands=False, priority=3)
 
         installed = manager.list_installed()
 
@@ -3044,7 +3044,7 @@ class TestExtensionPriorityCLI:
 
         # Install extension with priority
         manager = ExtensionManager(project_dir)
-        manager.install_from_directory(extension_dir, "0.1.0", register_commands=False, priority=7)
+        manager.install_from_directory(extension_dir, "0.0.73", register_commands=False, priority=7)
 
         with patch.object(Path, "cwd", return_value=project_dir):
             result = runner.invoke(app, ["extension", "list"])
@@ -3062,7 +3062,7 @@ class TestExtensionPriorityCLI:
 
         # Install extension with default priority
         manager = ExtensionManager(project_dir)
-        manager.install_from_directory(extension_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(extension_dir, "0.0.73", register_commands=False)
 
         # Verify default priority
         assert manager.registry.get("test-ext")["priority"] == 10
@@ -3087,7 +3087,7 @@ class TestExtensionPriorityCLI:
 
         # Install extension with priority 5
         manager = ExtensionManager(project_dir)
-        manager.install_from_directory(extension_dir, "0.1.0", register_commands=False, priority=5)
+        manager.install_from_directory(extension_dir, "0.0.73", register_commands=False, priority=5)
 
         with patch.object(Path, "cwd", return_value=project_dir):
             result = runner.invoke(app, ["extension", "set-priority", "test-ext", "5"])
@@ -3105,7 +3105,7 @@ class TestExtensionPriorityCLI:
 
         # Install extension
         manager = ExtensionManager(project_dir)
-        manager.install_from_directory(extension_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(extension_dir, "0.0.73", register_commands=False)
 
         with patch.object(Path, "cwd", return_value=project_dir):
             result = runner.invoke(app, ["extension", "set-priority", "test-ext", "0"])
@@ -3140,7 +3140,7 @@ class TestExtensionPriorityCLI:
 
         # Install extension
         manager = ExtensionManager(project_dir)
-        manager.install_from_directory(extension_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(extension_dir, "0.0.73", register_commands=False)
 
         # Use display name "Test Extension" instead of ID "test-ext"
         with patch.object(Path, "cwd", return_value=project_dir):
@@ -3188,7 +3188,7 @@ class TestExtensionPriorityBackwardsCompatibility:
         manager = ExtensionManager(project_dir)
 
         # Install extension normally
-        manager.install_from_directory(extension_dir, "0.1.0", register_commands=False)
+        manager.install_from_directory(extension_dir, "0.0.73", register_commands=False)
 
         # Manually remove priority to simulate legacy extension
         ext_data = manager.registry.data["extensions"]["test-ext"]
