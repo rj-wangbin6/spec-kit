@@ -43,6 +43,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+# Disable progress bar to avoid PowerShell 5.1 Archive module bug
+$ProgressPreference = 'SilentlyContinue'
 
 # Validate version format
 if ($Version -notmatch '^[rv]\d+\.\d+\.\d+$') {
@@ -489,10 +491,16 @@ function Build-Variant {
         }
     }
 
-    # Create zip archive
+    # Create zip archive (disable progress to avoid PowerShell 5.1 bug)
     $zipFile = Join-Path $GenReleasesDir "spec-kit-template-${Agent}-${Script}-${Version}.zip"
-    Compress-Archive -Path "$baseDir/*" -DestinationPath $zipFile -Force
-    Write-Host "Created $zipFile"
+    $prevProgressPref = $ProgressPreference
+    $ProgressPreference = 'SilentlyContinue'
+    try {
+        Compress-Archive -Path "$baseDir/*" -DestinationPath $zipFile -Force
+        Write-Host "Created $zipFile"
+    } finally {
+        $ProgressPreference = $prevProgressPref
+    }
 }
 
 # Define all agents and scripts
@@ -500,13 +508,13 @@ $AllAgents = @('claude', 'gemini', 'copilot', 'cursor-agent', 'qwen', 'opencode'
 $AllScripts = @('sh', 'ps')
 
 function Normalize-List {
-    param([string]$Input)
+    param([string]$InputString)
 
-    if ([string]::IsNullOrEmpty($Input)) {
+    if ([string]::IsNullOrEmpty($InputString)) {
         return @()
     }
 
-    $items = $Input -split '[,\s]+' | Where-Object { $_ } | Select-Object -Unique
+    $items = $InputString -split '[,\s]+' | Where-Object { $_ } | Select-Object -Unique
     return $items
 }
 
