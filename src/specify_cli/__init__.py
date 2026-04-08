@@ -979,7 +979,7 @@ def move_skills_to_claude(project_path: Path, verbose: bool = True, tracker: Ste
             tracker.add("move-skills", "Move skills to .claude/skills")
             tracker.complete("move-skills", ".claude/skills")
         elif verbose:
-            console.print(f"[cyan]Moved skills to .claude/skills[/cyan]")
+            console.print("[cyan]Moved skills to .claude/skills[/cyan]")
     except Exception as e:
         if tracker:
             tracker.add("move-skills", "Move skills to .claude/skills")
@@ -1352,6 +1352,9 @@ def scaffold_from_core_pack(
                 for f in templates_dir.iterdir():
                     if f.is_file():
                         shutil.copy2(f, tmpl_root / f.name)
+                    elif f.is_dir():
+                        # Copy subdirectories (code-review/, skills/, etc.)
+                        shutil.copytree(f, tmpl_root / f.name, dirs_exist_ok=True)
 
             # Scripts (bash/ and powershell/)
             for subdir in ("bash", "powershell"):
