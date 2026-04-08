@@ -53,7 +53,8 @@ if ($Version -notmatch '^[rv]\d+\.\d+\.\d+$') {
 Write-Host "Building release packages for $Version"
 
 # Create and use .genreleases directory for all build artifacts
-$GenReleasesDir = ".genreleases"
+# Override via GENRELEASES_DIR env var (e.g. for tests writing to a temp dir)
+$GenReleasesDir = if ($env:GENRELEASES_DIR) { $env:GENRELEASES_DIR } else { ".genreleases" }
 if (Test-Path $GenReleasesDir) {
     Remove-Item -Path $GenReleasesDir -Recurse -Force -ErrorAction SilentlyContinue
 }
