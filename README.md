@@ -528,6 +528,7 @@ If you encounter issues with an agent, please open an issue so we can refine the
 
 - **[Complete Spec-Driven Development Methodology](./spec-driven.md)** - Deep dive into the full process
 - **[Detailed Walkthrough](#-detailed-process)** - Step-by-step implementation guide
+- **[Release Guide](./docs/RELEASE-GUIDE.md)** - How to publish new versions (for maintainers)
 
 ---
 
