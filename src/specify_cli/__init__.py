@@ -1225,13 +1225,12 @@ def _locate_release_script() -> tuple[Path, str]:
     """
     if os.name == "nt":
         name = "create-release-packages.ps1"
-        shell = shutil.which("pwsh")
+        # Try pwsh (PowerShell 7+) first, then fall back to powershell.exe (5.1)
+        shell = shutil.which("pwsh") or shutil.which("powershell")
         if not shell:
             raise FileNotFoundError(
-                "'pwsh' (PowerShell 7+) not found on PATH. "
-                "The bundled release script requires PowerShell 7+ (pwsh), "
-                "not Windows PowerShell 5.x (powershell.exe). "
-                "Install from https://aka.ms/powershell to use offline scaffolding."
+                "No PowerShell found on PATH. "
+                "Please ensure either PowerShell 7+ (pwsh) or Windows PowerShell 5.x (powershell.exe) is installed."
             )
     else:
         name = "create-release-packages.sh"

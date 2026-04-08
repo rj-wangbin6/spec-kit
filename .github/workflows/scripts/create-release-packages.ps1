@@ -1,5 +1,6 @@
 #!/usr/bin/env pwsh
-#requires -Version 7.0
+# Compatible with PowerShell 5.1+ and PowerShell 7+
+#requires -Version 5.1
 
 <#
 .SYNOPSIS
