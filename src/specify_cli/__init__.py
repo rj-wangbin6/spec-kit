@@ -1423,6 +1423,9 @@ def scaffold_from_core_pack(
                     else:
                         shutil.copy2(item, dest)
 
+        # Move skills to .claude/skills (same as non-offline installation)
+        move_skills_to_claude(project_path, verbose=False, tracker=tracker)
+
         if tracker:
             tracker.complete("scaffold", "bundled assets applied")
         return True

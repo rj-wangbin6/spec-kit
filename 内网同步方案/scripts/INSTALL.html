@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spec Kit 内网离线安装指南</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.6em;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #34495e;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        h4 {
+            color: #555;
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+        p { margin-bottom: 15px; }
+        ul, ol {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+        li { margin-bottom: 8px; }
+        code {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            color: #e74c3c;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        pre code {
+            background: transparent;
+            border: none;
+            color: #f8f8f2;
+            padding: 0;
+        }
+        .alert {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        .alert-info {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            color: #1976d2;
+        }
+        .alert-warning {
+            background: #fff3e0;
+            border-color: #ff9800;
+            color: #e65100;
+        }
+        .alert-success {
+            background: #e8f5e9;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+        strong { color: #e74c3c; font-weight: 600; }
+        .meta {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-size: 0.9em;
+            color: #555;
+        }
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .feature-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 3px solid #3498db;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .faq {
+            background: #f9f9f9;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 3px solid #95a5a6;
+        }
+        .faq h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        hr {
+            border: none;
+            border-top: 2px solid #ecf0f1;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📦 Spec Kit 内网离线安装指南</h1>
+        
+        <p>本文档指导您如何通过内网服务器 <strong>172.16.37.100</strong> 离线安装 Specify CLI 工具。</p>
+
+        <hr>
+
+        <h2>📋 前提条件</h2>
+        <ul>
+            <li>✅ 能够访问内网服务器 172.16.37.100 的9999端口</li>
+            <li>✅ 已安装 <strong>uv</strong> 包管理工具</li>
+        </ul>
+
+        <hr>
+
+        <h2>🚀 快速开始</h2>
+
+        <h3>1. 安装 uv 工具（如已安装可跳过）</h3>
+
+        <h4>Windows系统:</h4>
+        <pre><code># 使用PowerShell安装
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"</code></pre>
+
+        <h4>Linux/macOS系统:</h4>
+        <pre><code># 使用Shell安装
+curl -LsSf https://astral.sh/uv/install.sh | sh</code></pre>
+
+        <p>验证安装:</p>
+        <pre><code>uv --version</code></pre>
+
+        <h3>2. 离线安装 Specify CLI</h3>
+        <p>使用以下命令通过内网服务器离线安装:</p>
+        <pre><code>uv tool install specify-cli --find-links http://172.16.37.100:9999/packages/spec-kit --find-links http://172.16.37.100:9999/packages/dependencies --no-index</code></pre>
+
+        <div class="alert alert-info">
+            <strong>参数说明:</strong>
+            <ul>
+                <li><code>--find-links http://172.16.37.100:9999/packages/spec-kit</code>: 指定spec-kit项目包源</li>
+                <li><code>--find-links http://172.16.37.100:9999/packages/dependencies</code>: 指定依赖包源</li>
+                <li><code>--no-index</code>: 禁用PyPI,仅使用本地源</li>
+            </ul>
+        </div>
+
+        <h3>3. 验证安装</h3>
+        <pre><code>specify version</code></pre>
+
+        <p>如果看到类似以下输出,说明安装成功:</p>
+        <pre><code>                            ███████╗██████╗ ███████╗ ██████╗██╗███████╗██╗   ██╗                             
+                            ██╔════╝██╔══██╗██╔════╝██╔════╝██║██╔════╝╚██╗ ██╔╝                             
+                            ███████╗██████╔╝█████╗  ██║     ██║█████╗   ╚████╔╝                              
+                            ╚════██║██╔═══╝ ██╔══╝  ██║     ██║██╔══╝    ╚██╔╝                               
+                            ███████║██║     ███████╗╚██████╗██║██║        ██║                                
+                            ╚══════╝╚═╝     ╚══════╝ ╚═════╝╚═╝╚═╝        ╚═╝                                
+                                                                                                             
+                   锐捷网络信息资源部版|GitHub Spec Kit - Spec-Driven Development Toolkit                    
+
+╭───────────────────────────────────────── Specify CLI Information ─────────────────────────────────────────╮
+│                                                                                                           │
+│         CLI Version    0.0.75                                                                             │
+│    Template Version    0.5.0                                                                              │
+│            Released    2026-04-02                                                                         │
+│                                                                                                           │
+│              Python    3.11.9                                                                             │
+│            Platform    Windows                                                                            │
+│        Architecture    AMD64                                                                              │
+│          OS Version    10.0.19045                                                                         │
+│                                                                                                           │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+</code></pre>
+
+        <h3>4. 初始化项目（完全离线）</h3>
+
+        <div class="alert alert-warning">
+            <strong>⚠️ 重要提示:</strong> 当前版本（v0.0.70）需要显式添加 <code>--offline</code> 参数，否则会尝试从GitHub下载模板。
+        </div>
+
+        <pre><code># 完全离线初始化（推荐）
+specify init my-project --ai copilot --offline
+
+# 或在当前目录初始化
+specify init --here --ai copilot --offline</code></pre>
+
+        <div class="alert alert-info">
+            <strong>参数说明:</strong>
+            <ul>
+                <li><code>--offline</code>: 使用CLI内置资源，不访问GitHub（必需）</li>
+                <li><code>--ai copilot</code>: 选择GitHub Copilot作为AI助手</li>
+                <li><code>--here</code>: 在当前目录初始化（可选）</li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <h2>🔄 更新 Specify CLI</h2>
+        <p>如需更新到最新版本,使用以下命令:</p>
+        <pre><code># 更新CLI工具本身
+uv tool install specify-cli --force --find-links http://172.16.37.100:9999/packages/spec-kit --find-links http://172.16.37.100:9999/packages/dependencies --no-index
+
+# 验证新版本
+specify check</code></pre>
+
+        <div class="alert alert-info">
+            <strong>注意:</strong> 更新CLI后，初始化项目仍需添加 <code>--offline</code> 参数（当前v0.0.70，v0.6.0之前的版本均需要）。
+        </div>
+
+        <hr>
+
+        <h2>📦 浏览可用包</h2>
+        <p>通过浏览器访问以下地址查看所有可用包:</p>
+        <ul>
+            <li>项目包: <a href="http://172.16.37.100:9999/packages/spec-kit/" target="_blank">http://172.16.37.100:9999/packages/spec-kit/</a></li>
+            <li>依赖包: <a href="http://172.16.37.100:9999/packages/dependencies/" target="_blank">http://172.16.37.100:9999/packages/dependencies/</a></li>
+        </ul>
+
+        <hr>
+
+        <h2>🛠️ 常见问题</h2>
+
+        <div class="faq">
+            <h3>Q1: 为什么需要 --offline 参数？</h3>
+            <p><strong>A:</strong> 当前版本（v0.0.70）默认会从GitHub下载模板文件。使用 <code>--offline</code> 参数可强制使用CLI内置资源，确保完全离线运行。从v0.6.0开始，离线模式将成为默认行为。</p>
+        </div>
+
+        <div class="faq">
+            <h3>Q2: 初始化项目时提示"Failed to download"？</h3>
+            <p><strong>A:</strong> 说明忘记添加 <code>--offline</code> 参数。请使用：</p>
+            <pre><code>specify init my-project --ai copilot --offline</code></pre>
+        </div>
+
+        <div class="faq">
+            <h3>Q3: 安装时提示"No solution found"？</h3>
+            <p><strong>A:</strong> 可能是依赖包不完整,请联系管理员更新服务器包。</p>
+        </div>
+
+        <div class="faq">
+            <h3>Q4: Windows安装时提示"系统无法打开指定的设备或文件"？</h3>
+            <p><strong>A:</strong> 这是Windows环境下的临时文件权限问题，尝试以下解决方案：</p>
+            <p><strong>方法1: 清理uv缓存（推荐）</strong></p>
+            <pre><code>uv cache clean
+uv tool install specify-cli --find-links http://172.16.37.100:9999/packages/spec-kit --find-links http://172.16.37.100:9999/packages/dependencies --no-index</code></pre>
+            <p><strong>方法2: 以管理员权限运行PowerShell</strong></p>
+            <p>右键PowerShell图标 → "以管理员身份运行"，然后重新执行安装命令。</p>
+            <p><strong>方法3: 检查杀毒软件</strong></p>
+            <p>临时禁用Windows Defender或其他杀毒软件，完成安装后再启用。</p>
+        </div>
+
+        <div class="faq">
+            <h3>Q5: Windows初始化项目提示"pwsh not found"？</h3>
+            <p><strong>A:</strong> 使用 <code>--offline</code> 参数初始化项目时，需要安装PowerShell 7+（pwsh），Windows内置的PowerShell 5.x不支持。</p>
+            <p><strong>解决方案1: 安装PowerShell 7+（推荐）</strong></p>
+            <ol style="margin-left: 20px; line-height: 2;">
+                <li>访问 <a href="https://aka.ms/powershell" target="_blank">https://aka.ms/powershell</a></li>
+                <li>下载并安装PowerShell 7+</li>
+                <li>重新打开终端，使用 <code>pwsh</code> 命令进入PowerShell 7+</li>
+                <li>执行 <code>specify init . --ai copilot --offline</code></li>
+            </ol>
+            <p><strong>解决方案2: 去掉 --offline 参数（需要外网访问）</strong></p>
+            <pre><code>specify init . --ai copilot</code></pre>
+            <p>注意：去掉 <code>--offline</code> 后会尝试从GitHub下载模板，需要能访问GitHub。如果在内网环境，建议安装PowerShell 7+使用离线模式。</p>
+        </div>
+
+        <div class="faq">
+            <h3>Q6: 如何卸载 Specify CLI？</h3>
+            <p><strong>A:</strong> 使用以下命令:</p>
+            <pre><code>uv tool uninstall specify-cli</code></pre>
+        </div>
+
+        <div class="faq">
+            <h3>Q7: 服务器包多久更新一次？</h3>
+            <p><strong>A:</strong> 服务器每天凌晨2点自动从GitHub同步最新版本。</p>
+        </div>
+
+        <div class="faq">
+            <h3>Q8: macOS/Linux上能用吗？</h3>
+            <p><strong>A:</strong> 完全支持！24个依赖包是跨平台通用的（py3-none-any），pyyaml包已为所有平台提供专用版本。服务器当前支持：</p>
+            <ul style="margin-left: 40px; margin-top: 10px;">
+                <li>✅ <strong>Windows</strong> (x86_64)</li>
+                <li>✅ <strong>Linux</strong> (x86_64)</li>
+                <li>✅ <strong>macOS</strong> (Intel x86_64 + Apple Silicon ARM64)</li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <div class="meta">
+            <strong>最后更新:</strong> 2026-04-08<br>
+            <strong>服务器信息:</strong> Ubuntu 22.04.5 LTS | Python 3.10.12 | uv 0.11.4
+        </div>
+    </div>
+</body>
+</html>
