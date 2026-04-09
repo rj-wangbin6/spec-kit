@@ -1372,7 +1372,7 @@ def scaffold_from_core_pack(
             env["GENRELEASES_DIR"] = str(tmp / ".genreleases")
             if os.name == "nt":
                 cmd = [
-                    shell_cmd, "-File", str(release_script),
+                    shell_cmd, "-ExecutionPolicy", "Bypass", "-File", str(release_script),
                     "-Version", "v0.0.0",
                     "-Agents", ai_assistant,
                     "-Scripts", script_type,

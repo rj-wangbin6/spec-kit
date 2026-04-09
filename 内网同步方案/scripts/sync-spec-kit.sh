@@ -46,40 +46,46 @@ WHL_FILE=$(ls -t dist/*.whl | head -1)
 cp -f "$WHL_FILE" "$PACKAGES_DIR/spec-kit/"
 echo "✓ 已复制: $(basename $WHL_FILE)" | tee -a "$LOG_FILE"
 
-# 5. 更新Windows依赖(Python 3.11)
+# 5. 更新Windows依赖(Python 3.11, 3.12, 3.13)
 echo "[5/7] 更新Windows依赖..." | tee -a "$LOG_FILE"
-TEMP_DEPS="/tmp/win-deps-$(date +%s).txt"
-"$UV_BIN" pip compile pyproject.toml --python-version 3.11 --python-platform windows 2>/dev/null | grep -E '^[a-zA-Z]' > "$TEMP_DEPS"
+for PY_VER in 3.11 3.12 3.13; do
+    echo "  - Python $PY_VER (Windows)..." | tee -a "$LOG_FILE"
+    TEMP_DEPS="/tmp/win-deps-$PY_VER-$(date +%s).txt"
+    "$UV_BIN" pip compile pyproject.toml --python-version "$PY_VER" --python-platform windows 2>/dev/null | grep -E '^[a-zA-Z]' > "$TEMP_DEPS"
 
-python3 -m pip download -r "$TEMP_DEPS" \
-    --python-version 3.11 \
-    --platform win_amd64 \
-    --only-binary=:all: \
-    -d "$PACKAGES_DIR/dependencies/" 2>&1 | tee -a "$LOG_FILE"
+    python3 -m pip download -r "$TEMP_DEPS" \
+        --python-version "$PY_VER" \
+        --platform win_amd64 \
+        --only-binary=:all: \
+        -d "$PACKAGES_DIR/dependencies/" 2>&1 | tee -a "$LOG_FILE"
 
-rm -f "$TEMP_DEPS"
+    rm -f "$TEMP_DEPS"
+done
 echo "✓ Windows依赖更新完成" | tee -a "$LOG_FILE"
 
-# 6. 更新macOS依赖(Python 3.11)
+# 6. 更新macOS依赖(Python 3.11, 3.12, 3.13)
 echo "[6/7] 更新macOS依赖..." | tee -a "$LOG_FILE"
-TEMP_MAC_DEPS="/tmp/mac-deps-$(date +%s).txt"
-"$UV_BIN" pip compile pyproject.toml --python-version 3.11 --python-platform macos 2>/dev/null | grep -E '^[a-zA-Z]' > "$TEMP_MAC_DEPS"
+for PY_VER in 3.11 3.12 3.13; do
+    echo "  - Python $PY_VER (macOS)..." | tee -a "$LOG_FILE"
+    TEMP_MAC_DEPS="/tmp/mac-deps-$PY_VER-$(date +%s).txt"
+    "$UV_BIN" pip compile pyproject.toml --python-version "$PY_VER" --python-platform macos 2>/dev/null | grep -E '^[a-zA-Z]' > "$TEMP_MAC_DEPS"
 
-# 下载macOS x86_64版本(Intel Mac)
-python3 -m pip download -r "$TEMP_MAC_DEPS" \
-    --python-version 3.11 \
-    --platform macosx_10_9_x86_64 \
-    --only-binary=:all: \
-    -d "$PACKAGES_DIR/dependencies/" 2>&1 | tee -a "$LOG_FILE"
+    # 下载macOS x86_64版本(Intel Mac)
+    python3 -m pip download -r "$TEMP_MAC_DEPS" \
+        --python-version "$PY_VER" \
+        --platform macosx_10_9_x86_64 \
+        --only-binary=:all: \
+        -d "$PACKAGES_DIR/dependencies/" 2>&1 | tee -a "$LOG_FILE"
 
-# 下载macOS ARM64版本(Apple Silicon)
-python3 -m pip download -r "$TEMP_MAC_DEPS" \
-    --python-version 3.11 \
-    --platform macosx_11_0_arm64 \
-    --only-binary=:all: \
-    -d "$PACKAGES_DIR/dependencies/" 2>&1 | tee -a "$LOG_FILE"
+    # 下载macOS ARM64版本(Apple Silicon)
+    python3 -m pip download -r "$TEMP_MAC_DEPS" \
+        --python-version "$PY_VER" \
+        --platform macosx_11_0_arm64 \
+        --only-binary=:all: \
+        -d "$PACKAGES_DIR/dependencies/" 2>&1 | tee -a "$LOG_FILE"
 
-rm -f "$TEMP_MAC_DEPS"
+    rm -f "$TEMP_MAC_DEPS"
+done
 echo "✓ macOS依赖更新完成" | tee -a "$LOG_FILE"
 
 # 7. 统计结果

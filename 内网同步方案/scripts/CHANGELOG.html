@@ -176,12 +176,77 @@
                 <a href="QUICKREF.html">快速参考</a>
             </div>
 
+            <!-- v0.0.77 -->
+            <div class="version-block">
+                <div class="version-header">
+                    <div>
+                        <span class="version-title">v0.0.77</span>
+                        <span class="version-tag">最新版本</span>
+                    </div>
+                    <div class="version-date">📅 2026-04-09</div>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>🎯 本次更新重点</h4>
+                    <p>修复 PowerShell 脚本执行策略错误，扩展多 Python 版本支持（3.11、3.12、3.13）。</p>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">🐛</span>
+                        Bug 修复
+                    </h3>
+                    <ul class="item-list">
+                        <li class="fix">
+                            <strong>修复 PowerShell 执行策略错误:</strong> 离线模式调用 PowerShell 脚本时添加 <code>-ExecutionPolicy Bypass</code> 参数，解决 Windows 执行策略限制导致的脚本执行失败
+                            <br><strong>现象：</strong> 运行 <code>specify init --ai copilot --offline</code> 时报错 "因为在此系统上禁止运行脚本 SecurityError: UnauthorizedAccess"
+                            <br><br><strong>根因：</strong> Windows 默认执行策略可能设置为 Restricted，阻止未签名脚本执行
+                            <br><br><strong>修复：</strong> 添加 <code>-ExecutionPolicy Bypass</code> 参数到 PowerShell 命令调用
+                            <br><small>📁 src/specify_cli/__init__.py#L1375</small>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">✨</span>
+                        功能改进
+                    </h3>
+                    <ul class="item-list">
+                        <li class="improve">
+                            <strong>支持多 Python 版本:</strong> 内网服务器现在提供 Python 3.11、3.12、3.13 的依赖包，用户可以在任意支持的 Python 版本上安装 specify-cli
+                        </li>
+                        <li class="improve">
+                            <strong>更新同步脚本:</strong> <code>sync-spec-kit.sh</code> 改为循环下载三个 Python 版本的依赖，确保多版本兼容性
+                            <br><small>📁 内网同步方案/scripts/sync-spec-kit.sh</small>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">📦</span>
+                        部署信息
+                    </h3>
+                    <ul class="item-list">
+                        <li class="feature">
+                            <strong>内网服务器版本:</strong> 0.0.77
+                        </li>
+                        <li class="feature">
+                            <strong>支持的 Python 版本:</strong> 3.11, 3.12, 3.13
+                        </li>
+                        <li class="feature">
+                            <strong>安装命令:</strong> <code>uv tool install specify-cli --find-links http://172.16.37.100:9999/packages/spec-kit --find-links http://172.16.37.100:9999/packages/dependencies --no-index --upgrade</code>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
             <!-- v0.0.76 -->
             <div class="version-block">
                 <div class="version-header">
                     <div>
                         <span class="version-title">v0.0.76</span>
-                        <span class="version-tag">最新版本</span>
                     </div>
                     <div class="version-date">📅 2026-04-09</div>
                 </div>
