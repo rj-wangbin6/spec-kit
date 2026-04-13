@@ -2,6 +2,12 @@
 
 <!-- insert new changelog below this comment -->
 
+## [0.0.78] - 2026-04-13
+
+### Changed
+
+- feat: update developer-info-collector skill
+
 ## [0.4.2] - 2026-03-25
 
 ### Changed
