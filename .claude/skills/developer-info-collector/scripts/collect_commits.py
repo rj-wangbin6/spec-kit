@@ -65,10 +65,8 @@ class CommitCollector:
             (成功标志, 输出内容)
         """
         try:
-            full_cmd = ['git'] + cmd
-            self.log(f"执行命令: {' '.join(full_cmd)}")
             result = subprocess.run(
-                full_cmd,
+                ['git'] + cmd,
                 cwd=cwd,
                 capture_output=True,
                 text=True,
@@ -76,7 +74,6 @@ class CommitCollector:
                 errors='ignore',
                 timeout=30
             )
-            self.log(f"命令返回码: {result.returncode}, 输出行数: {len(result.stdout.strip().split(chr(10))) if result.stdout else 0}")
             return (result.returncode == 0, result.stdout.strip())
         except Exception as e:
             self.log(f"命令执行失败 {' '.join(cmd)}: {e}", "ERROR")
@@ -105,14 +102,16 @@ class CommitCollector:
         """
         self.log(f"获取仓库提交记录: {repo_path.name}")
         
-        # 处理日期格式：如果只有日期没有时间，追加 00:00:00
-        if since and len(since) == 10:  # YYYY-MM-DD
-            since = f"{since} 00:00:00"
-        if until and len(until) == 10:  # YYYY-MM-DD  
-            until = f"{until} 23:59:59"
+        # 规范化日期格式（修复Windows/PowerShell环境下Git日期解析问题）
+        if since and len(since) == 10:  # YYYY-MM-DD 格式
+            since = since + " 00:00:00"
+            self.log(f"规范化开始日期: {since}", "DEBUG")
+        if until and len(until) == 10:  # YYYY-MM-DD 格式
+            until = until + " 23:59:59"
+            self.log(f"规范化结束日期: {until}", "DEBUG")
         
-        # 构建git log命令（查询所有分支，包括远程分支）
-        cmd = ['log', '--all', '--pretty=format:%H|%an|%ae|%ai|%s']
+        # 构建git log命令
+        cmd = ['log', '--pretty=format:%H|%an|%ae|%ai|%s']
         
         if author:
             cmd.extend(['--author', author])
@@ -232,17 +231,6 @@ class CommitCollector:
         if not (repo_path_obj / '.git').exists():
             raise ValueError(f"指定路径不是Git仓库: {repo_path}")
         
-        # 拉取远程最新代码
-        self.log("正在拉取远程最新代码...")
-        fetch_success, fetch_output = self.run_git_command(
-            ['fetch', '--all'],
-            repo_path_obj
-        )
-        if fetch_success:
-            self.log("远程代码拉取成功")
-        else:
-            self.log("远程代码拉取失败，将继续使用本地数据", "WARN")
-        
         # 获取当前分支
         success, current_branch = self.run_git_command(
             ['branch', '--show-current'],
@@ -291,15 +279,6 @@ class CommitCollector:
                 "total_commits": len(commits)
             }
         }
-    
-    def save_to_file(self, data: Dict, output_path: str, pretty: bool = False):
-        """保存数据到JSON文件"""
-        indent = 2 if pretty else None
-        
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=indent)
-        
-        print(f"\n✅ 提交记录已保存到: {output_path}")
     
     def print_summary(self, data: Dict):
         """打印摘要信息"""
@@ -372,8 +351,6 @@ def main():
         type=int,
         help='最大提交数量'
     )
-    
-
     
     parser.add_argument(
         '--pretty', '-p',

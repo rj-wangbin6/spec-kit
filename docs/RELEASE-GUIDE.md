@@ -111,6 +111,94 @@ git push origin v0.4.3
 
 **通常需要 3-5 分钟完成。**
 
+### 步骤 7：同步到内网服务器（可选）
+
+如果需要将新版本同步到内网服务器，在 Actions 完成后执行：
+
+#### 7.1 运行服务器同步脚本
+
+通过 SSH 远程执行同步脚本：
+
+```bash
+# 方式一：直接执行同步脚本（推荐）
+ssh root@172.16.37.100 "cd /opt/spec-kit-packages/sync-workspace/spec-kit-repo && bash 内网同步方案/scripts/sync-spec-kit.sh"
+
+# 方式二：如果已配置定时任务，可以手动触发
+ssh root@172.16.37.100 "/opt/spec-kit-packages/sync-workspace/sync-spec-kit.sh"
+```
+
+同步脚本会自动完成：
+- ✅ 拉取最新代码（包含新的 tag）
+- ✅ 构建 wheel 包
+- ✅ 下载跨平台依赖（Windows/macOS/Linux，Python 3.11/3.12/3.13）
+- ✅ 更新发布目录
+
+**预期输出示例：**
+```
+========================================
+Spec Kit同步开始: 2026-04-13 09:30:07
+========================================
+[1/6] 检查GitHub连通性...
+✓ GitHub连接正常
+[2/6] 拉取最新代码...
+✓ 更新成功: 15dd55b -> 88e4593
+[3/6] 构建wheel包...
+Successfully built dist/specify_cli-0.0.78-py3-none-any.whl
+[4/6] 更新spec-kit包...
+✓ 已复制: specify_cli-0.0.78-py3-none-any.whl
+[5/7] 更新Windows依赖...
+✓ Windows依赖更新完成
+[6/7] 更新macOS依赖...
+✓ macOS依赖更新完成
+[7/7] 同步完成统计...
+========================================
+同步完成摘要:
+  - Commit版本: 88e4593
+  - Wheel包: specify_cli-0.0.78-py3-none-any.whl
+  - 项目包大小: 2.1M
+  - 依赖包数量: 36 个
+  - 依赖包大小: 5.5M
+  - 完成时间: 2026-04-13 09:31:24
+========================================
+```
+
+#### 7.2 更新服务器文档
+
+更新内网服务器的文档页面（index.html、CHANGELOG.html、INSTALL.html）：
+
+```bash
+# 上传更新后的文档文件
+scp "内网同步方案/scripts/index.html" \
+    "内网同步方案/scripts/INSTALL.html" \
+    "内网同步方案/scripts/CHANGELOG.html" \
+    root@172.16.37.100:/opt/spec-kit-packages/
+
+# 验证文件已更新
+ssh root@172.16.37.100 "ls -lh /opt/spec-kit-packages/*.html"
+```
+
+#### 7.3 验证服务器部署
+
+确认新版本已成功部署：
+
+```bash
+# 检查 wheel 包
+ssh root@172.16.37.100 "ls -lh /opt/spec-kit-packages/packages/spec-kit/*.whl | tail -1"
+
+# 验证版本号（通过 HTTP 服务）
+ssh root@172.16.37.100 "curl -s http://127.0.0.1:9999/index.html | grep -A 2 '当前版本'"
+
+# 验证 CHANGELOG 更新
+ssh root@172.16.37.100 "curl -s http://127.0.0.1:9999/CHANGELOG.html | grep -A 5 'v0.0.78'"
+```
+
+**服务访问地址：**
+- 首页：http://172.16.37.100:9999/index.html
+- 安装指南：http://172.16.37.100:9999/INSTALL.html  
+- 变更日志：http://172.16.37.100:9999/CHANGELOG.html
+- 项目包：http://172.16.37.100:9999/packages/spec-kit/
+- 依赖包：http://172.16.37.100:9999/packages/dependencies/
+
 ---
 
 ## 自动化机制
@@ -170,6 +258,38 @@ unzip spec-kit-template-claude-sh-0.4.3.zip
 # 运行初始化脚本
 cd spec-kit-template-claude-sh-0.4.3
 ./init.sh
+```
+
+### 4. 验证内网服务器部署（如果执行了步骤 7）
+
+如果已同步到内网服务器，确认以下内容：
+
+```bash
+# 检查最新的 wheel 包是否存在
+ssh root@172.16.37.100 "ls -lh /opt/spec-kit-packages/packages/spec-kit/*.whl | tail -1"
+# 预期输出包含新版本号，例如：specify_cli-0.0.78-py3-none-any.whl
+
+# 验证首页显示的版本号
+ssh root@172.16.37.100 "curl -s http://127.0.0.1:9999/index.html | grep -A 2 '当前版本'"
+# 预期输出：v0.0.78
+
+# 或通过浏览器访问
+# http://172.16.37.100:9999/index.html
+```
+
+**内网安装测试（可选）：**
+
+```bash
+# 在内网机器上测试离线安装
+uv tool install specify-cli \
+  --find-links http://172.16.37.100:9999/packages/spec-kit \
+  --find-links http://172.16.37.100:9999/packages/dependencies \
+  --no-index \
+  --upgrade
+
+# 验证安装的版本
+specify version
+# 应显示新版本号
 ```
 
 ---
@@ -250,6 +370,45 @@ git commit -m "chore: bump version to 0.4.4"
 
 **注意**：已下载使用该版本的用户不受影响。
 
+### Q6: 内网服务器同步失败怎么办？
+
+如果同步脚本执行失败，检查以下几点：
+
+```bash
+# 1. 检查服务器网络连通性
+ssh root@172.16.37.100 "ping -c 3 github.com"
+
+# 2. 检查仓库状态
+ssh root@172.16.37.100 "cd /opt/spec-kit-packages/sync-workspace/spec-kit-repo && git status"
+
+# 3. 手动拉取最新代码
+ssh root@172.16.37.100 "cd /opt/spec-kit-packages/sync-workspace/spec-kit-repo && git fetch origin main && git reset --hard origin/main"
+
+# 4. 检查同步日志
+ssh root@172.16.37.100 "ls -lt /opt/spec-kit-packages/logs/sync-*.log | head -1"
+ssh root@172.16.37.100 "tail -50 \$(ls -t /opt/spec-kit-packages/logs/sync-*.log | head -1)"
+```
+
+### Q7: 如何回滚内网服务器版本？
+
+如果新版本有问题，可以回滚到旧版本：
+
+```bash
+# 1. 检查可用的历史版本
+ssh root@172.16.37.100 "ls -lt /opt/spec-kit-packages/packages/spec-kit/"
+
+# 2. 查看 git 历史
+ssh root@172.16.37.100 "cd /opt/spec-kit-packages/sync-workspace/spec-kit-repo && git log --oneline -10"
+
+# 3. 回滚到指定版本（例如 v0.0.77）
+ssh root@172.16.37.100 "cd /opt/spec-kit-packages/sync-workspace/spec-kit-repo && git reset --hard v0.0.77"
+
+# 4. 重新构建和部署
+ssh root@172.16.37.100 "cd /opt/spec-kit-packages/sync-workspace/spec-kit-repo && bash 内网同步方案/scripts/sync-spec-kit.sh"
+```
+
+**注意**：历史 wheel 包会保留在 `/opt/spec-kit-packages/packages/spec-kit/` 目录中，用户可以选择安装特定版本。
+
 ---
 
 ## 发布清单
@@ -266,12 +425,19 @@ git commit -m "chore: bump version to 0.4.4"
 - [ ] 等待 GitHub Actions 完成（3-5 分钟）
 - [ ] 验证 Release 页面有新版本
 - [ ] 测试至少一个发布包
+- [ ] **（可选）** 同步到内网服务器
+  - [ ] 运行服务器同步脚本
+  - [ ] 更新服务器文档（index.html、CHANGELOG.html、INSTALL.html）
+  - [ ] 验证内网服务器部署（检查版本号和 wheel 包）
+  - [ ] 测试内网离线安装
 
 ---
 
-## 成功案例：v0.4.3 发布
+## 成功案例：v0.0.78 发布
 
-**日期**：2026-04-08
+**日期**：2026-04-13
+
+**变更内容**：更新 developer-info-collector 技能
 
 **操作步骤**：
 
@@ -280,23 +446,46 @@ git commit -m "chore: bump version to 0.4.4"
 git checkout main
 git pull origin main
 
-# 2. 更新版本号
-# 编辑 pyproject.toml: version = "0.4.3"
+# 2. 更新版本号和 CHANGELOG
+# 编辑 pyproject.toml: version = "0.0.78"
+# 编辑 CHANGELOG.md: 添加 v0.0.78 记录
 
 # 3. 提交并创建 tag
-git add pyproject.toml
-git commit -m "chore: bump version to 0.4.3"
-git tag -a v0.4.3 -m "Release v0.4.3"
+git add pyproject.toml CHANGELOG.md
+git commit -m "chore: bump version to 0.0.78"
+git tag -a v0.0.78 -m "Release v0.0.78"
 
-# 4. 推送
+# 4. 推送到 GitHub
 git push origin main
-git push origin v0.4.3
+git push origin v0.0.78
+
+# 5. 等待 GitHub Actions 完成（约 3-5 分钟）
+# 访问：https://github.com/rj-wangbin6/spec-kit/actions
+
+# 6. 同步到内网服务器
+ssh root@172.16.37.100 "cd /opt/spec-kit-packages/sync-workspace/spec-kit-repo && bash 内网同步方案/scripts/sync-spec-kit.sh"
+
+# 7. 更新服务器文档
+scp "内网同步方案/scripts/index.html" \
+    "内网同步方案/scripts/INSTALL.html" \
+    "内网同步方案/scripts/CHANGELOG.html" \
+    root@172.16.37.100:/opt/spec-kit-packages/
+
+# 8. 验证内网部署
+ssh root@172.16.37.100 "curl -s http://127.0.0.1:9999/index.html | grep -A 2 '当前版本'"
 ```
 
 **结果**：
-- ✅ GitHub Actions 自动触发
-- ✅ 3 分钟内完成所有发布包构建
-- ✅ Release 成功发布：https://github.com/rj-wangbin6/spec-kit/releases/tag/v0.4.3
+- ✅ GitHub Actions 自动触发并成功完成
+- ✅ Release 成功发布：https://github.com/rj-wangbin6/spec-kit/releases/tag/v0.0.78
+- ✅ 内网服务器同步完成
+  - Commit 版本：88e4593
+  - Wheel 包：specify_cli-0.0.78-py3-none-any.whl
+  - 项目包大小：2.1M
+  - 依赖包数量：36 个
+  - 依赖包大小：5.5M
+- ✅ 服务器文档已更新（http://172.16.37.100:9999）
+- ✅ 内网离线安装测试通过
 
 ---
 
@@ -309,10 +498,12 @@ git push origin v0.4.3
   - `.github/workflows/RELEASE-PROCESS.md` - 详细的工作流说明
   - `.github/workflows/release.yml` - Release 工作流配置
   - `.github/workflows/release-trigger.yml` - Release Trigger 工作流配置（备用）
+  - `内网同步方案/内网同步方案.md` - 内网服务器部署和同步方案
+  - `内网同步方案/scripts/README.md` - 服务器脚本使用说明
 
 ---
 
-**最后更新**：2026-04-08  
-**文档版本**：1.0.0  
-**适用版本**：Spec Kit v0.4.3+
+**最后更新**：2026-04-13  
+**文档版本**：1.1.0  
+**适用版本**：Spec Kit v0.0.78+
 
