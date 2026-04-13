@@ -91,7 +91,7 @@ class DeveloperInfoCollector:
             except Exception as e:
                 self.log(f"扫描失败 {current_path}: {e}", "ERROR")
         
-        scan_directory(self.base_dir, 1)
+        scan_directory(self.base_dir, 0)
         self.git_projects = projects
         self.log(f"扫描完成，找到 {len(projects)} 个Git项目")
         return projects
