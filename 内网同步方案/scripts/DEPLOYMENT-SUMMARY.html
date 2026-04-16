@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spec Kit 部署摘要</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.6em;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #34495e;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        p { margin-bottom: 15px; }
+        ul, ol {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+        li { margin-bottom: 8px; }
+        code {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            color: #e74c3c;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        pre code {
+            background: transparent;
+            border: none;
+            color: #f8f8f2;
+            padding: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .warning-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .success-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .checklist {
+            list-style: none;
+            padding-left: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        .checklist li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #4caf50;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .meta {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-size: 0.9em;
+            color: #555;
+        }
+        .section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        hr {
+            border: none;
+            border-top: 2px solid #ecf0f1;
+            margin: 30px 0;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        .badge-success {
+            background: #4caf50;
+            color: white;
+        }
+        .cmd-section {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .cmd-section h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Spec Kit 内网离线安装服务部署摘要</h1>
+
+        <div class="meta">
+            <strong>部署日期:</strong> 2026-04-08<br>
+            <strong>服务器:</strong> 172.16.37.100 (Ubuntu 22.04.5 LTS)<br>
+            <strong>服务端口:</strong> 9999 (HTTP)<br>
+            <strong>Spec Kit版本:</strong> v0.0.70<br>
+            <strong>Python版本:</strong> 3.10.12<br>
+            <strong>uv版本:</strong> 0.11.4<br>
+            <strong>pip版本:</strong> 26.0.1
+        </div>
+
+        <hr>
+
+        <h2>📂 目录结构</h2>
+        <pre><code>/opt/spec-kit-packages/          # HTTP根目录 (9999端口)
+├── packages/
+│   ├── spec-kit/                # 项目wheel包 (224KB)
+│   │   └── specify_cli-0.0.70-py3-none-any.whl
+│   └── dependencies/            # 依赖包 (26个, 3.6MB)
+│       ├── annotated-doc-0.0.4-py3-none-any.whl
+│       ├── pyyaml-6.0.3-cp311-cp311-win_amd64.whl
+│       ├── pyyaml-6.0.3-cp311-cp311-manylinux*.whl
+│       ├── colorama-0.4.6-py2.py3-none-any.whl
+│       └── ... (其他23个依赖包)
+├── sync-workspace/
+│   ├── spec-kit-repo/           # GitHub仓库克隆
+│   └── install-uv.sh            # uv安装脚本
+├── logs/
+│   ├── sync-log.md              # 同步主日志
+│   ├── sync-YYYYMMDD-HHMMSS.log # 每次同步日志
+│   └── cron.log                 # 定时任务日志
+├── index.html                   # 文档中心首页
+├── INSTALL.html                 # 用户安装指南
+├── QUICKREF.html                # 快速参考
+└── DEPLOYMENT-SUMMARY.html      # 本文档
+
+/opt/spec-kit-server/            # 服务控制目录
+├── start-server.sh              # 启动HTTP服务
+├── stop-server.sh               # 停止HTTP服务
+└── sync-spec-kit.sh             # GitHub同步脚本 (3.1KB)</code></pre>
+
+        <hr>
+
+        <h2>🚀 服务管理</h2>
+
+        <div class="cmd-section">
+            <h4>启动HTTP服务</h4>
+            <pre><code>/opt/spec-kit-server/start-server.sh</code></pre>
+        </div>
+
+        <div class="cmd-section">
+            <h4>停止HTTP服务</h4>
+            <pre><code>/opt/spec-kit-server/stop-server.sh</code></pre>
+        </div>
+
+        <div class="cmd-section">
+            <h4>手动同步GitHub</h4>
+            <pre><code>/opt/spec-kit-server/sync-spec-kit.sh</code></pre>
+        </div>
+
+        <div class="cmd-section">
+            <h4>查看服务状态</h4>
+            <pre><code>netstat -tln | grep 9999      # 检查端口监听
+ps aux | grep python3         # 查看服务进程</code></pre>
+        </div>
+
+        <hr>
+
+        <h2>⏰ 自动化维护</h2>
+
+        <div class="section">
+            <h3>Cron定时任务</h3>
+            <ul>
+                <li><strong>执行时间:</strong> 每天凌晨2:00</li>
+                <li><strong>任务:</strong> 从GitHub拉取最新版本并构建</li>
+                <li><strong>日志:</strong> /opt/spec-kit-packages/logs/cron.log</li>
+            </ul>
+
+            <p>查看定时任务:</p>
+            <pre><code>crontab -l | grep spec-kit</code></pre>
+        </div>
+
+        <hr>
+
+        <h2>🔍 验证与测试</h2>
+
+        <div class="section">
+            <h3>1. 服务可访问性</h3>
+            <pre><code>curl http://172.16.37.100:9999/packages/</code></pre>
+
+            <h3>2. 包完整性检查</h3>
+            <pre><code>ls -lh /opt/spec-kit-packages/packages/spec-kit/*.whl
+ls -lh /opt/spec-kit-packages/packages/dependencies/*.whl | wc -l  # 应显示26</code></pre>
+
+            <h3>3. 客户端安装测试 (Windows)</h3>
+            <pre><code>uv tool install specify-cli \
+  --find-links http://172.16.37.100:9999/packages/spec-kit \
+  --find-links http://172.16.37.100:9999/packages/dependencies \
+  --no-index</code></pre>
+        </div>
+
+        <hr>
+
+        <h2>📊 包信息统计</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>类型</th>
+                    <th>数量</th>
+                    <th>大小</th>
+                    <th>Python版本</th>
+                    <th>平台</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>项目包</td>
+                    <td>1</td>
+                    <td>224KB</td>
+                    <td>py3-none-any</td>
+                    <td>通用</td>
+                </tr>
+                <tr>
+                    <td>依赖包</td>
+                    <td>26</td>
+                    <td>3.6MB</td>
+                    <td>py3/cp311</td>
+                    <td>win_amd64+manylinux</td>
+                </tr>
+                <tr>
+                    <td><strong>总计</strong></td>
+                    <td><strong>27</strong></td>
+                    <td><strong>3.8MB</strong></td>
+                    <td>-</td>
+                    <td>跨平台</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="info-box">
+            <h3>关键依赖</h3>
+            <ul>
+                <li><strong>pyyaml:</strong> 提供cp311+win_amd64和manylinux两个平台的包</li>
+                <li><strong>colorama:</strong> Windows平台专用，Linux不需要</li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <h2>✅ 部署验证清单</h2>
+
+        <ul class="checklist">
+            <li>HTTP服务运行在9999端口</li>
+            <li>包目录可通过HTTP访问</li>
+            <li>项目wheel包已构建(0.0.70版本)</li>
+            <li>26个依赖包完整下载</li>
+            <li>Python 3.11 + Windows平台兼容</li>
+            <li>同步脚本测试通过</li>
+            <li>Cron定时任务已配置</li>
+            <li>用户安装文档已创建</li>
+            <li>Windows客户端离线安装测试成功</li>
+        </ul>
+
+        <hr>
+
+        <h2>🔧 故障排查</h2>
+
+        <div class="section">
+            <h3>问题1: 依赖包缺失</h3>
+            <p><strong>解决:</strong> 手动执行同步脚本</p>
+            <pre><code>/opt/spec-kit-server/sync-spec-kit.sh</code></pre>
+
+            <h3>问题2: 服务端口被占用</h3>
+            <p><strong>解决:</strong> 检查9999端口占用</p>
+            <pre><code>netstat -tln | grep 9999
+/opt/spec-kit-server/stop-server.sh  # 先停止现有服务
+/opt/spec-kit-server/start-server.sh # 重新启动</code></pre>
+
+            <h3>问题3: Python版本不兼容</h3>
+            <p><strong>解决:</strong> 确保客户端Python >= 3.11，或重新下载对应版本的包</p>
+            <pre><code>python3 -m pip download -r deps.txt --python-version 3.10 --platform win_amd64</code></pre>
+        </div>
+
+        <hr>
+
+        <h2>📋 维护记录</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>日期</th>
+                    <th>操作</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>2026-04-08</td>
+                    <td>初始部署</td>
+                    <td>完成HTTP服务、同步脚本、定时任务配置</td>
+                </tr>
+                <tr>
+                    <td>2026-04-08</td>
+                    <td>修复Python ABI</td>
+                    <td>添加cp311版本pyyaml包</td>
+                </tr>
+                <tr>
+                    <td>2026-04-08</td>
+                    <td>跨平台支持</td>
+                    <td>下载Windows+Linux双平台依赖包</td>
+                </tr>
+                <tr>
+                    <td>2026-04-08</td>
+                    <td>验证测试</td>
+                    <td>Windows客户端离线安装测试通过</td>
+                </tr>
+                <tr>
+                    <td>2026-04-08</td>
+                    <td>文档优化</td>
+                    <td>生成HTML版本文档，解决浏览器乱码问题</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr>
+
+        <h2>🔗 相关链接</h2>
+
+        <div class="section">
+            <ul>
+                <li><strong>GitHub仓库:</strong> <a href="https://github.com/rj-wangbin6/spec-kit" target="_blank">https://github.com/rj-wangbin6/spec-kit</a></li>
+                <li><strong>文档中心:</strong> <a href="http://172.16.37.100:9999/" target="_blank">http://172.16.37.100:9999/</a></li>
+                <li><strong>安装指南:</strong> <a href="http://172.16.37.100:9999/INSTALL.html" target="_blank">http://172.16.37.100:9999/INSTALL.html</a></li>
+                <li><strong>快速参考:</strong> <a href="http://172.16.37.100:9999/QUICKREF.html" target="_blank">http://172.16.37.100:9999/QUICKREF.html</a></li>
+                <li><strong>项目包URL:</strong> <a href="http://172.16.37.100:9999/packages/spec-kit/" target="_blank">http://172.16.37.100:9999/packages/spec-kit/</a></li>
+                <li><strong>依赖包URL:</strong> <a href="http://172.16.37.100:9999/packages/dependencies/" target="_blank">http://172.16.37.100:9999/packages/dependencies/</a></li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <div class="success-box">
+            <h3>部署状态</h3>
+            <p>
+                <strong>部署完成时间:</strong> 2026-04-08 16:20 CST<br>
+                <strong>当前commit:</strong> cb13fc7<br>
+                <strong>部署状态:</strong> <span class="badge badge-success">✓ 可用</span><br>
+                <strong>服务状态:</strong> <span class="badge badge-success">● 运行中</span>
+            </p>
+        </div>
+
+        <hr>
+
+        <div class="warning-box">
+            <h3>⚠️ 注意事项</h3>
+            <ul>
+                <li><strong>macOS支持:</strong> ✅ 已完成！支持Intel (x86_64)和Apple Silicon (ARM64)两种架构</li>
+                <li><strong>Python版本:</strong> 客户端需要Python 3.11+，否则可能出现ABI不兼容</li>
+                <li><strong>--offline参数:</strong> 当前版本(v0.0.70)初始化项目时必须添加 <code>--offline</code> 参数</li>
+                <li><strong>定期维护:</strong> 建议定期检查 <code>/opt/spec-kit-packages/logs/cron.log</code> 确保同步正常</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

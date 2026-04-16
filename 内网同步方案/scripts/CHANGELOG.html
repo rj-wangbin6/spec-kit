@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>迭代记录 - Spec Kit</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            background: white;
+            padding: 40px;
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+        .content {
+            background: white;
+            padding: 40px;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        .nav-links {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        .nav-links a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover {
+            color: #764ba2;
+        }
+        .version-block {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-left: 5px solid #667eea;
+        }
+        .version-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .version-title {
+            font-size: 1.8em;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        .version-date {
+            color: #7f8c8d;
+            font-size: 0.95em;
+        }
+        .version-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            display: inline-block;
+            margin-left: 15px;
+        }
+        .section {
+            margin: 20px 0;
+        }
+        .section-title {
+            color: #667eea;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .section-icon {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        .item-list {
+            list-style: none;
+            padding: 0;
+        }
+        .item-list li {
+            padding: 12px 20px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #4caf50;
+            line-height: 1.6;
+        }
+        .item-list li.fix {
+            border-left-color: #f44336;
+        }
+        .item-list li.feature {
+            border-left-color: #2196f3;
+        }
+        .item-list li.improve {
+            border-left-color: #ff9800;
+        }
+        .item-list li code {
+            background: rgba(0,0,0,0.05);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+        .highlight-box {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .highlight-box h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        .highlight-box ul {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: white;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 迭代记录</h1>
+            <p>Spec Kit 版本更新历史</p>
+        </div>
+
+        <div class="content">
+            <div class="nav-links">
+                <a href="index.html">← 返回首页</a>
+                <a href="INSTALL.html">安装指南</a>
+                <a href="QUICKREF.html">快速参考</a>
+            </div>
+
+            <!-- v0.0.78 -->
+            <div class="version-block">
+                <div class="version-header">
+                    <div>
+                        <span class="version-title">v0.0.78</span>
+                        <span class="version-tag">最新版本</span>
+                    </div>
+                    <div class="version-date">📅 2026-04-13</div>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>🎯 本次更新重点</h4>
+                    <p>更新 developer-info-collector 技能，优化开发者信息收集工作流。</p>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">✨</span>
+                        功能改进
+                    </h3>
+                    <ul class="item-list">
+                        <li class="improve">
+                            <strong>更新 developer-info-collector 技能:</strong> 优化两步式工作流，改进仓库信息扫描和提交记录收集流程，提升 Code Review 前的信息准备效率
+                            <br><small>📁 .claude/skills/developer-info-collector/</small>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">📦</span>
+                        部署信息
+                    </h3>
+                    <ul class="item-list">
+                        <li class="feature">
+                            <strong>内网服务器版本:</strong> 0.0.78
+                        </li>
+                        <li class="feature">
+                            <strong>Git Commit:</strong> 88e4593
+                        </li>
+                        <li class="feature">
+                            <strong>支持的 Python 版本:</strong> 3.11, 3.12, 3.13
+                        </li>
+                        <li class="feature">
+                            <strong>安装命令:</strong> <code>uv tool install specify-cli --find-links http://172.16.37.100:9999/packages/spec-kit --find-links http://172.16.37.100:9999/packages/dependencies --no-index --upgrade</code>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- v0.0.77 -->
+            <div class="version-block">
+                <div class="version-header">
+                    <div>
+                        <span class="version-title">v0.0.77</span>
+                    </div>
+                    <div class="version-date">📅 2026-04-09</div>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>🎯 本次更新重点</h4>
+                    <p>修复 PowerShell 脚本执行策略错误，扩展多 Python 版本支持（3.11、3.12、3.13）。</p>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">🐛</span>
+                        Bug 修复
+                    </h3>
+                    <ul class="item-list">
+                        <li class="fix">
+                            <strong>修复 PowerShell 执行策略错误:</strong> 离线模式调用 PowerShell 脚本时添加 <code>-ExecutionPolicy Bypass</code> 参数，解决 Windows 执行策略限制导致的脚本执行失败
+                            <br><strong>现象：</strong> 运行 <code>specify init --ai copilot --offline</code> 时报错 "因为在此系统上禁止运行脚本 SecurityError: UnauthorizedAccess"
+                            <br><br><strong>根因：</strong> Windows 默认执行策略可能设置为 Restricted，阻止未签名脚本执行
+                            <br><br><strong>修复：</strong> 添加 <code>-ExecutionPolicy Bypass</code> 参数到 PowerShell 命令调用
+                            <br><small>📁 src/specify_cli/__init__.py#L1375</small>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">✨</span>
+                        功能改进
+                    </h3>
+                    <ul class="item-list">
+                        <li class="improve">
+                            <strong>支持多 Python 版本:</strong> 内网服务器现在提供 Python 3.11、3.12、3.13 的依赖包，用户可以在任意支持的 Python 版本上安装 specify-cli
+                        </li>
+                        <li class="improve">
+                            <strong>更新同步脚本:</strong> <code>sync-spec-kit.sh</code> 改为循环下载三个 Python 版本的依赖，确保多版本兼容性
+                            <br><small>📁 内网同步方案/scripts/sync-spec-kit.sh</small>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">📦</span>
+                        部署信息
+                    </h3>
+                    <ul class="item-list">
+                        <li class="feature">
+                            <strong>内网服务器版本:</strong> 0.0.77
+                        </li>
+                        <li class="feature">
+                            <strong>支持的 Python 版本:</strong> 3.11, 3.12, 3.13
+                        </li>
+                        <li class="feature">
+                            <strong>安装命令:</strong> <code>uv tool install specify-cli --find-links http://172.16.37.100:9999/packages/spec-kit --find-links http://172.16.37.100:9999/packages/dependencies --no-index --upgrade</code>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- v0.0.76 -->
+            <div class="version-block">
+                <div class="version-header">
+                    <div>
+                        <span class="version-title">v0.0.76</span>
+                    </div>
+                    <div class="version-date">📅 2026-04-09</div>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>🎯 本次更新重点</h4>
+                    <p>统一离线和非离线安装的目录结构，确保所有安装方式都包含 .claude/skills/ 目录。</p>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">🐛</span>
+                        Bug 修复
+                    </h3>
+                    <ul class="item-list">
+                        <li class="fix">
+                            <strong>修复离线安装缺少 .claude/skills/:</strong> 离线安装现在也会将 skills 移动到 <code>.claude/skills/</code> 目录，与非离线安装保持一致
+                            <br><strong>现象：</strong>
+                            <br>• <code>specify init --here --ai copilot</code> (非离线) → 有 <code>.claude/skills/</code> ✅
+                            <br>• <code>specify init --here --ai copilot --offline</code> (离线) → 缺少 <code>.claude/skills/</code> ❌
+                            <br><br><strong>根因：</strong> 非离线安装调用了 <code>move_skills_to_claude()</code>，但离线安装的 <code>scaffold_from_core_pack()</code> 未调用此逻辑
+                            <br><br><strong>修复：</strong> 在 <code>scaffold_from_core_pack()</code> 末尾添加 skills 移动逻辑
+                            <br><small>📁 src/specify_cli/__init__.py#L1425</small>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">✨</span>
+                        功能改进
+                    </h3>
+                    <ul class="item-list">
+                        <li class="improve">
+                            <strong>目录结构统一:</strong> 两种安装方式现在生成完全一致的目录结构
+                            <div class="code-block">project/
+├── .specify/          ✅ 保留（模板和脚本）
+├── .github/           ✅ 所有copilot agent都有
+├── .claude/           ✅ 所有agent都有（包含skills/）  
+├── .git/              ✅ 保留
+└── .vscode/           ✅ 保留</div>
+                        </li>
+                        <li class="improve">
+                            <strong>Skills 可用性:</strong> 所有 agent 都可以使用 .claude/skills/ 中的技能，无论安装方式
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">📦</span>
+                        部署信息
+                    </h3>
+                    <ul class="item-list">
+                        <li class="feature">
+                            <strong>内网服务器版本:</strong> 0.0.76
+                        </li>
+                        <li class="feature">
+                            <strong>安装命令:</strong> <code>uv tool install specify-cli --find-links http://172.16.37.100:9999/packages/spec-kit --find-links http://172.16.37.100:9999/packages/dependencies --no-index --upgrade</code>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- v0.0.75 -->
+            <div class="version-block">
+                <div class="version-header">
+                    <div>
+                        <span class="version-title">v0.0.75</span>
+                    </div>
+                    <div class="version-date">📅 2026-04-08</div>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>🎯 本次更新重点</h4>
+                    <p>修复 Windows PowerShell 5.1 离线模式的关键 bug，提升跨平台兼容性和用户体验。</p>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">🐛</span>
+                        Bug 修复
+                    </h3>
+                    <ul class="item-list">
+                        <li class="fix">
+                            <strong>修复 PowerShell 参数冲突:</strong> 将 <code>$Input</code> 参数重命名为 <code>$InputString</code>，解决与 PowerShell 保留变量的冲突问题
+                            <br><small>📁 .github/workflows/scripts/create-release-packages.ps1#L502</small>
+                        </li>
+                        <li class="fix">
+                            <strong>修复 PowerShell 5.1 进度条崩溃:</strong> 添加全局 <code>$ProgressPreference = 'SilentlyContinue'</code>，解决 Compress-Archive 的 IndexOutOfRangeException 错误
+                            <br><small>📁 .github/workflows/scripts/create-release-packages.ps1#L45</small>
+                        </li>
+                        <li class="fix">
+                            <strong>修复模板子目录缺失:</strong> 在离线模式下递归复制所有模板子目录（code-review, code-review-c, skills）
+                            <br><small>📁 src/specify_cli/__init__.py#L1353-L1354</small>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">✨</span>
+                        功能改进
+                    </h3>
+                    <ul class="item-list">
+                        <li class="improve">
+                            <strong>支持 Windows PowerShell 5.1:</strong> 移除对 PowerShell 7+ 的硬性要求，Windows 内置的 PowerShell 5.1 即可使用离线模式
+                        </li>
+                        <li class="improve">
+                            <strong>优化离线模式体验:</strong> 添加 <code>--script ps</code> 参数支持，避免交互式提示阻塞后台命令执行
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">📚</span>
+                        文档更新
+                    </h3>
+                    <ul class="item-list">
+                        <li class="feature">
+                            <strong>更新首页信息:</strong> 版本号更新为 v0.0.75，移除 PS7 要求说明，添加最新更新时间显示
+                        </li>
+                        <li class="feature">
+                            <strong>优化安装验证:</strong> 将验证命令从 <code>specify check</code> 改为 <code>specify version</code>，输出更清晰直观
+                        </li>
+                        <li class="feature">
+                            <strong>新增迭代记录页面:</strong> 创建本页面，记录版本更新历史和详细变更信息
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">🔧</span>
+                        技术细节
+                    </h3>
+                    <div class="highlight-box" style="background: #fff3e0; border-color: #ff9800;">
+                        <h4>核心问题分析</h4>
+                        <ul>
+                            <li><strong>$Input 参数冲突:</strong> PowerShell 的 <code>$Input</code> 是自动变量（管道输入），使用 <code>powershell.exe -File</code> 调用时会导致参数值为空</li>
+                            <li><strong>进度条 bug:</strong> PowerShell 5.1 的 Microsoft.PowerShell.Archive 模块在显示进度条时存在 IndexOutOfRangeException 问题，PowerShell 7+ 已修复</li>
+                            <li><strong>模板目录遗漏:</strong> 原代码仅复制文件，未处理子目录结构，导致 code-review-c 和 skills 等目录内容丢失</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">✅</span>
+                        测试验证
+                    </h3>
+                    <div class="code-block">
+# 验证结果
+✅ CLI Version: 0.0.75
+✅ .github/agents: 15 文件
+✅ .github/prompts: 15 文件
+✅ .specify/templates: 6 模板文件
+✅ .specify/templates/code-review-c: 2 文件
+✅ .specify/templates/skills: 7 子目录
+
+修复验证:
+✅ Python: 模板子目录递归复制
+✅ PowerShell: $Input 参数冲突修复
+✅ PowerShell: 进度条全局禁用
+✅ 版本号: 0.0.75 正确显示
+                    </div>
+                </div>
+            </div>
+
+            <!-- v0.0.73 -->
+            <div class="version-block">
+                <div class="version-header">
+                    <div>
+                        <span class="version-title">v0.0.73</span>
+                    </div>
+                    <div class="version-date">📅 2026-04-02</div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">✨</span>
+                        功能更新
+                    </h3>
+                    <ul class="item-list">
+                        <li class="feature">
+                            支持离线模式项目初始化
+                        </li>
+                        <li class="feature">
+                            添加模板子目录支持框架
+                        </li>
+                        <li class="improve">
+                            优化 PowerShell 脚本兼容性
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- v0.0.71 -->
+            <div class="version-block">
+                <div class="version-header">
+                    <div>
+                        <span class="version-title">v0.0.71</span>
+                    </div>
+                    <div class="version-date">📅 2026-03-28</div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">✨</span>
+                        功能更新
+                    </h3>
+                    <ul class="item-list">
+                        <li class="feature">
+                            初步支持 Windows PowerShell 5.1
+                        </li>
+                        <li class="feature">
+                            添加 powershell.exe 回退机制
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- v0.0.70 -->
+            <div class="version-block">
+                <div class="version-header">
+                    <div>
+                        <span class="version-title">v0.0.70</span>
+                    </div>
+                    <div class="version-date">📅 2026-03-20</div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-icon">🎉</span>
+                        内网服务初始版本
+                    </h3>
+                    <ul class="item-list">
+                        <li class="feature">
+                            搭建内网 HTTP 分发服务（172.16.37.100:9999）
+                        </li>
+                        <li class="feature">
+                            实现离线安装和项目初始化
+                        </li>
+                        <li class="feature">
+                            创建自动同步脚本和定时任务
+                        </li>
+                        <li class="feature">
+                            提供 HTML 文档和安装指南
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Spec Kit 内网离线服务</strong></p>
+            <p style="margin-top: 10px; opacity: 0.8;">
+                <a href="index.html" style="color: white; text-decoration: none;">← 返回首页</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
