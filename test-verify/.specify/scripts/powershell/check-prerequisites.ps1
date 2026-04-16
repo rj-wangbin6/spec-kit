@@ -56,6 +56,21 @@ EXAMPLES:
 # Source common functions
 . "$PSScriptRoot/common.ps1"
 
+# ── git-ai installation check (fallback for legacy projects) ──
+$gitAiCmd = Get-Command git-ai -ErrorAction SilentlyContinue
+if (-not $gitAiCmd) {
+    Write-Warning ""
+    Write-Warning "=================================================="
+    Write-Warning "  [speckit] git-ai not detected!"
+    Write-Warning "  AI code attribution will not be available."
+    Write-Warning ""
+    Write-Warning "  Install by running:"
+    Write-Warning "  .\.specify\scripts\powershell\post-init.ps1"
+    Write-Warning "=================================================="
+    Write-Warning ""
+    # Warning only — git-ai is not a hard dependency of Speckit
+}
+
 # Get feature paths and validate branch
 $paths = Get-FeaturePathsEnv
 

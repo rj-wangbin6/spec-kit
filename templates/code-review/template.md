@@ -177,6 +177,21 @@ xxxxxxxx
 
 **当前实现:** 代码实际实现情况
 
+---
+
+## 📊 AI 代码使用统计（git-ai 可用时自动填充）
+
+> 本节由 git-ai 自动生成。如 git-ai 未安装或无归因数据，可省略本节。
+
+| Commit | 作者 | 总新增行 | 已知人工 | 未知/未归因 | 纯 AI 接受 | 混编 | AI 占比 | Note | 主要工具 |
+|--------|------|---------|---------|------------|------------|------|---------|------|---------|
+| {short_sha} | {author} | {git_diff_added_lines} | {human_additions} | {unknown_additions} | {ai_accepted} | {mixed_additions} | {ai_pct}% | {有/无} | {tool} |
+| **合计** | — | **{total}** | **{total_human}** | **{total_unknown}** | **{total_ai_accepted}** | **{total_mixed}** | **{avg_pct}%** | — | — |
+
+> **数据来源：** git-ai authorship note (`refs/notes/ai`)
+> **AI 占比** = `ai_additions / git_diff_added_lines`
+> **已知人工** = `human_additions`；**未知/未归因** = `unknown_additions`
+
 **偏离说明:** 说明实现不完整的地方
 
 **建议:** 如何改进以满足需求

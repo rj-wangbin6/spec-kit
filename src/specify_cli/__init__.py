@@ -1524,6 +1524,71 @@ def ensure_constitution_from_template(project_path: Path, tracker: StepTracker |
 
 INIT_OPTIONS_FILE = ".specify/init-options.json"
 
+SCRIPT_TYPE_POST_INIT = {
+    "ps": ".specify/scripts/powershell/post-init.ps1",
+    "sh": ".specify/scripts/bash/post-init.sh",
+}
+
+
+def _get_post_init_command(project_path: Path, script_type: str) -> list[str] | None:
+    """Resolve the post-init script path and return the command to execute it.
+
+    Returns None if the script does not exist.
+    """
+    rel = SCRIPT_TYPE_POST_INIT.get(script_type)
+    if not rel:
+        return None
+    script_path = project_path / rel
+    if not script_path.exists():
+        return None
+    if script_type == "ps":
+        return ["pwsh", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_path)]
+    return ["bash", str(script_path)]
+
+
+def run_post_init_script(
+    project_path: Path,
+    script_type: str,
+    tracker: "StepTracker | None" = None,
+) -> None:
+    """Execute the post-init script (e.g. git-ai installation).
+
+    Failures are logged as warnings and never abort ``specify init``.
+    """
+    if tracker:
+        tracker.start("post-init")
+
+    cmd = _get_post_init_command(project_path, script_type)
+    if not cmd:
+        if tracker:
+            tracker.skip("post-init", "script not found")
+        return
+
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=str(project_path),
+            timeout=120,
+        )
+        if result.returncode == 0:
+            if tracker:
+                tracker.complete("post-init", "ok")
+        else:
+            if tracker:
+                tracker.error("post-init", f"exit code {result.returncode}")
+            else:
+                console.print(f"[yellow]Warning: post-init script exited with code {result.returncode}[/yellow]")
+    except subprocess.TimeoutExpired:
+        if tracker:
+            tracker.error("post-init", "timed out (120s)")
+        else:
+            console.print("[yellow]Warning: post-init script timed out[/yellow]")
+    except Exception as e:
+        if tracker:
+            tracker.error("post-init", str(e))
+        else:
+            console.print(f"[yellow]Warning: post-init failed: {e}[/yellow]")
+
 
 def save_init_options(project_path: Path, options: dict[str, Any]) -> None:
     """Persist the CLI options used during ``specify init``.
@@ -2094,6 +2159,7 @@ def init(
     for key, label in [
         ("cleanup", "Cleanup"),
         ("git", "Initialize git repository"),
+        ("post-init", "Run post-init hooks"),
         ("final", "Finalize")
     ]:
         tracker.add(key, label)
@@ -2271,6 +2337,9 @@ def init(
             # Scaffold path has no zip archive to clean up
             if not use_github:
                 tracker.skip("cleanup", "not needed (no download)")
+
+            # Run post-init hooks (e.g. git-ai installation)
+            run_post_init_script(project_path, selected_script, tracker=tracker)
 
             tracker.complete("final", "project ready")
         except (typer.Exit, SystemExit):
