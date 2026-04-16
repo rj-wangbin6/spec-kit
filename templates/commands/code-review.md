@@ -647,6 +647,54 @@ await mcp_upload-doc_create_code_review_issue({
 📁 本地报告：docs/review-results/code-review-YYYY-MM-DD-{author_name}.md
 ```
 
+### 步骤 8.5：收集被审查 commit 的 AI 归因数据
+
+在步骤 8.4 完成后，对本次 Code Review 涉及的每个 commit 收集 AI 使用统计：
+
+1. **检测 git-ai 是否可用**
+   - 在终端执行: `git-ai --version`
+   - 如果命令不存在（未安装），直接跳到步骤 9，不影响审查流程
+   - 如果命令存在，继续下一步
+
+2. **对每个被审查的 commit 获取统计**
+   - 先执行: `git notes --ref=ai list <commit_full_hash>`，记录结果为 `has_authorship_note`
+   - 无论有没有 note，都执行: `git-ai stats <commit_full_hash> --json`
+   - 如果 `git-ai stats` 成功返回 JSON，就记录下来；无 note 的 commit 仍然保留，但在结果里标记 `has_authorship_note=false`
+
+3. **收集结果汇总**
+   - 将所有成功拿到 stats JSON 的 commit SHA 用逗号拼接
+   - 如果一个都没有，跳到步骤 9
+
+### 步骤 8.6：上传 AI 统计到远程
+
+在步骤 8.5 收集到有效数据的前提下：
+
+1. **调用上传脚本**
+   - 执行: `.specify/scripts/powershell/upload-ai-stats.ps1 -Commits "<逗号分隔的SHA>"`
+  - 脚本内部会优先读取 `GIT_AI_REPORT_REMOTE_URL`
+  - 如果未提供完整 URL，则要求同时配置 `GIT_AI_REPORT_REMOTE_ENDPOINT` + `GIT_AI_REPORT_REMOTE_PATH`
+  - `GIT_AI_REPORT_REMOTE_API_KEY` 用于认证（可选）
+
+2. **在审查报告末尾追加 AI 代码使用统计表格**
+
+```markdown
+## AI 代码使用统计
+
+| Commit | 作者 | 总新增行 | 已知人工 | 未知/未归因 | 纯 AI 接受 | 混编 | AI 占比 | Note | 主要工具 |
+|--------|------|---------|---------|------------|------------|------|---------|------|---------|
+| abc123d | 张三 | 200 | 105 | 15 | 65 | 15 | 40% | 有 | copilot::gpt-4o |
+| **合计** | — | **350** | **195** | **45** | **90** | **20** | **31%** | — | — |
+
+> **数据来源：** git-ai authorship note (`refs/notes/ai`)
+> **AI 占比** = `stats.ai_additions / stats.git_diff_added_lines`
+> **已知人工** = `stats.human_additions`；**未知/未归因** = `stats.unknown_additions`
+```
+
+3. **如果上传失败或未配置 endpoint**，记录警告但不影响审查报告的其他内容
+
+> ⚠️ 重要：步骤 8.5/8.6 的任何失败都不应该阻止审查报告的生成。
+> git-ai 数据是"锦上添花"，不是"刚需"。
+
 ---
 
 ## 子代理调用规范
