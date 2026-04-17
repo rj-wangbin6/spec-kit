@@ -35,13 +35,24 @@ else
     echo "✓ 更新成功: $OLD_COMMIT -> $NEW_COMMIT" | tee -a "$LOG_FILE"
 fi
 
+# 2.5. 恢复内部专用技能（不在GitHub仓库中）
+echo "[2.5/7] 恢复内部专用技能..." | tee -a "$LOG_FILE"
+INTERNAL_SKILLS="/opt/spec-kit-packages/internal-skills"
+if [ -d "$INTERNAL_SKILLS/issue-fetch" ]; then
+    mkdir -p "$REPO_DIR/templates/skills"
+    cp -rf "$INTERNAL_SKILLS/issue-fetch" "$REPO_DIR/templates/skills/"
+    echo "✓ 已恢复 issue-fetch 技能" | tee -a "$LOG_FILE"
+else
+    echo "⚠ 未找到内部技能备份，跳过" | tee -a "$LOG_FILE"
+fi
+
 # 3. 构建wheel包
-echo "[3/6] 构建wheel包..." | tee -a "$LOG_FILE"
+echo "[3/7] 构建wheel包..." | tee -a "$LOG_FILE"
 rm -rf dist/ build/ *.egg-info
 "$UV_BIN" build 2>&1 | tee -a "$LOG_FILE"
 
 # 4. 拷贝wheel到发布目录
-echo "[4/6] 更新spec-kit包..." | tee -a "$LOG_FILE"
+echo "[4/7] 更新spec-kit包..." | tee -a "$LOG_FILE"
 WHL_FILE=$(ls -t dist/*.whl | head -1)
 cp -f "$WHL_FILE" "$PACKAGES_DIR/spec-kit/"
 echo "✓ 已复制: $(basename $WHL_FILE)" | tee -a "$LOG_FILE"
