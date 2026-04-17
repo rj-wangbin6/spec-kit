@@ -41,13 +41,28 @@ INTERNAL_SKILLS="/opt/spec-kit-packages/internal-skills"
 if [ -d "$INTERNAL_SKILLS/issue-fetch" ]; then
     mkdir -p "$REPO_DIR/templates/skills"
     cp -rf "$INTERNAL_SKILLS/issue-fetch" "$REPO_DIR/templates/skills/"
-    echo "✓ 已恢复 issue-fetch 技能" | tee -a "$LOG_FILE"
+    
+    # 临时注释掉 .gitignore 中的 issue-fetch 规则，确保打包时包含该技能
+    if [ -f "$REPO_DIR/.gitignore" ]; then
+        sed -i.bak '/^templates\/skills\/issue-fetch\//s/^/# TEMP_DISABLED: /' "$REPO_DIR/.gitignore"
+        echo "✓ 已恢复 issue-fetch 技能并临时禁用 .gitignore 规则" | tee -a "$LOG_FILE"
+    else
+        echo "✓ 已恢复 issue-fetch 技能" | tee -a "$LOG_FILE"
+    fi
 else
     echo "⚠ 未找到内部技能备份，跳过" | tee -a "$LOG_FILE"
 fi
 
 # 3. 构建wheel包
 echo "[3/7] 构建wheel包..." | tee -a "$LOG_FILE"
+rm -rf dist/ build/ *.egg-info
+"$UV_BIN" build 2>&1 | tee -a "$LOG_FILE"
+
+# 3.5. 恢复 .gitignore 文件
+if [ -f "$REPO_DIR/.gitignore.bak" ]; then
+    mv -f "$REPO_DIR/.gitignore.bak" "$REPO_DIR/.gitignore"
+    echo "✓ 已恢复 .gitignore 文件" | tee -a "$LOG_FILE"
+fi
 rm -rf dist/ build/ *.egg-info
 "$UV_BIN" build 2>&1 | tee -a "$LOG_FILE"
 
