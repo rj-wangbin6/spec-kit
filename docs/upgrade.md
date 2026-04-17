@@ -9,7 +9,7 @@
 | What to Upgrade | Command | When to Use |
 |----------------|---------|-------------|
 | **CLI Tool Only** | `uv tool install specify-cli --force --from git+https://github.com/github/spec-kit.git@vX.Y.Z` | Get latest CLI features without touching project files |
-| **Project Files** | `specify init --here --force --ai <your-agent>` | Update slash commands, templates, and scripts in your project |
+| **Project Files** | `specify init --here --force --ai <your-agent>` | Update slash commands, templates, scripts, and auto-sync git-ai |
 | **Both** | Run CLI upgrade, then project update | Recommended for major version updates |
 
 ---
@@ -56,6 +56,7 @@ Running `specify init --here --force` will update:
 - ✅ **Script files** (`.specify/scripts/`)
 - ✅ **Template files** (`.specify/templates/`)
 - ✅ **Shared memory files** (`.specify/memory/`) - **⚠️ See warnings below**
+- ✅ **git-ai installation** (install if missing, upgrade if already installed, then refresh hooks)
 
 ### What stays safe?
 
@@ -83,6 +84,8 @@ Replace `<your-agent>` with your AI assistant. Refer to this list of [Supported 
 ```bash
 specify init --here --force --ai copilot
 ```
+
+The update path also runs the generated post-init hook, which installs `git-ai` when missing, attempts to upgrade it when already installed, and refreshes `git-ai install-hooks` so repository tracking stays current.
 
 ### Understanding the `--force` flag
 

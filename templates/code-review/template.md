@@ -191,6 +191,7 @@ xxxxxxxx
 > **数据来源：** git-ai authorship note (`refs/notes/ai`)
 > **AI 占比** = `ai_additions / git_diff_added_lines`
 > **已知人工** = `human_additions`；**未知/未归因** = `unknown_additions`
+> **逐文件明细** = 需要 drill-down 时，可附带 `stats.files[]`
 
 **偏离说明:** 说明实现不完整的地方
 

@@ -657,9 +657,9 @@ await mcp_upload-doc_create_code_review_issue({
    - 如果命令存在，继续下一步
 
 2. **对每个被审查的 commit 获取统计**
-   - 先执行: `git notes --ref=ai list <commit_full_hash>`，记录结果为 `has_authorship_note`
+  - 先执行: `git notes --ref=ai list <commit_full_hash>`，记录结果为 `hasAuthorshipNote`
    - 无论有没有 note，都执行: `git-ai stats <commit_full_hash> --json`
-   - 如果 `git-ai stats` 成功返回 JSON，就记录下来；无 note 的 commit 仍然保留，但在结果里标记 `has_authorship_note=false`
+  - 如果 `git-ai stats` 成功返回 JSON，就记录下来；无 note 的 commit 仍然保留，但在结果里标记 `hasAuthorshipNote=false`
 
 3. **收集结果汇总**
    - 将所有成功拿到 stats JSON 的 commit SHA 用逗号拼接
@@ -674,6 +674,7 @@ await mcp_upload-doc_create_code_review_issue({
   - 脚本内部会优先读取 `GIT_AI_REPORT_REMOTE_URL`
   - 如果未提供完整 URL，则要求同时配置 `GIT_AI_REPORT_REMOTE_ENDPOINT` + `GIT_AI_REPORT_REMOTE_PATH`
   - `GIT_AI_REPORT_REMOTE_API_KEY` 用于认证（可选）
+  - 脚本会将这些 commit 组装为一次批量请求，并按 `results[]` 逐条解析返回状态
 
 2. **在审查报告末尾追加 AI 代码使用统计表格**
 
@@ -682,15 +683,17 @@ await mcp_upload-doc_create_code_review_issue({
 
 | Commit | 作者 | 总新增行 | 已知人工 | 未知/未归因 | 纯 AI 接受 | 混编 | AI 占比 | Note | 主要工具 |
 |--------|------|---------|---------|------------|------------|------|---------|------|---------|
-| abc123d | 张三 | 200 | 105 | 15 | 65 | 15 | 40% | 有 | copilot::gpt-4o |
+| abc123d | 张三 | 200 | 105 | 15 | 65 | 15 | 40% | 有 | copilot / gpt-4o |
 | **合计** | — | **350** | **195** | **45** | **90** | **20** | **31%** | — | — |
 
 > **数据来源：** git-ai authorship note (`refs/notes/ai`)
-> **AI 占比** = `stats.ai_additions / stats.git_diff_added_lines`
-> **已知人工** = `stats.human_additions`；**未知/未归因** = `stats.unknown_additions`
+> **AI 占比** = `stats.aiAdditions / stats.gitDiffAddedLines`
+> **已知人工** = `stats.humanAdditions`；**未知/未归因** = `stats.unknownAdditions`
+> **主要工具** = `stats.toolModelBreakdown` 中 `aiAdditions` 最大的项，展示为 `tool / model`
+> **逐文件明细** = 如需 drill-down，可读取 `stats.files[]`，其中包含 `filePath`、`gitDiffAddedLines`、`gitDiffDeletedLines`、`aiAdditions`、`humanAdditions`、`unknownAdditions` 与文件级 `toolModelBreakdown`
 ```
 
-3. **如果上传失败或未配置 endpoint**，记录警告但不影响审查报告的其他内容
+3. **如果批量上传失败、部分 commit 失败或未配置 endpoint**，记录警告但不影响审查报告的其他内容
 
 > ⚠️ 重要：步骤 8.5/8.6 的任何失败都不应该阻止审查报告的生成。
 > git-ai 数据是"锦上添花"，不是"刚需"。
