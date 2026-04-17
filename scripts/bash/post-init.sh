@@ -1,16 +1,22 @@
 #!/usr/bin/env bash
-# Post-init hook for Speckit: automatically installs and configures git-ai.
+# Post-init hook for Speckit: automatically installs, updates, and configures git-ai.
 #
 # This script is called by `specify init` after project scaffolding completes.
-# It ensures git-ai is installed and hooks are configured so that every commit
-# automatically records AI authorship data.
+# It ensures git-ai is installed, upgraded when already present, and hooks are
+# configured so that every commit automatically records AI authorship data.
+#
+# Behavior:
+#   1. Detect whether git-ai is already installed.
+#   2. If already installed, attempt `git-ai upgrade` (or `git-ai upgrade --force`).
+#   3. If not installed, or if upgrade fails, download and run the official installer.
+#   4. Refresh git-ai install-hooks configuration.
 #
 # Environment variables:
 #   GIT_AI_INSTALLER_URL  Override the default installer download URL.
 #
 # Usage:
 #   .specify/scripts/bash/post-init.sh
-#   .specify/scripts/bash/post-init.sh --force   # Re-install even if present
+#   .specify/scripts/bash/post-init.sh --force   # Force git-ai reinstall/upgrade even if present
 #   .specify/scripts/bash/post-init.sh --skip     # Skip git-ai setup entirely
 
 set -euo pipefail
@@ -70,6 +76,17 @@ invoke_git_ai_installer() {
     return $rc
 }
 
+invoke_git_ai_upgrade() {
+    local git_ai_cmd="$1"
+
+    info "Checking for git-ai updates..."
+    if [ "$FORCE" = true ]; then
+        "$git_ai_cmd" upgrade --force
+    else
+        "$git_ai_cmd" upgrade
+    fi
+}
+
 refresh_git_ai_install_hooks() {
     local git_ai_cmd
     if ! git_ai_cmd="$(get_git_ai_command)"; then
@@ -92,12 +109,21 @@ if [ "$SKIP" = true ]; then
     exit 0
 fi
 
-if git_ai_cmd="$(get_git_ai_command)" && [ "$FORCE" = false ]; then
+if git_ai_cmd="$(get_git_ai_command)"; then
     version=$("$git_ai_cmd" --version 2>/dev/null || true)
     if [ -n "$version" ]; then
-        success "git-ai already installed: $version"
+        success "git-ai detected: $version"
     else
-        success "git-ai already installed."
+        success "git-ai detected."
+    fi
+
+    if ! invoke_git_ai_upgrade "$git_ai_cmd"; then
+        warn "git-ai upgrade failed. Falling back to installer-based git-ai update."
+        if ! invoke_git_ai_installer; then
+            warn "git-ai installation failed."
+            warn "You can rerun this script later without blocking Spec Kit initialization."
+            exit 0
+        fi
     fi
 else
     if ! invoke_git_ai_installer; then
@@ -105,17 +131,17 @@ else
         warn "You can rerun this script later without blocking Spec Kit initialization."
         exit 0
     fi
+fi
 
-    if git_ai_cmd="$(get_git_ai_command)"; then
-        version=$("$git_ai_cmd" --version 2>/dev/null || true)
-        if [ -n "$version" ]; then
-            success "git-ai installed successfully: $version"
-        else
-            success "git-ai installed successfully."
-        fi
+if git_ai_cmd="$(get_git_ai_command)"; then
+    version=$("$git_ai_cmd" --version 2>/dev/null || true)
+    if [ -n "$version" ]; then
+        success "git-ai ready: $version"
     else
-        warn "git-ai installer completed, but the command is not yet available in this shell."
+        success "git-ai ready."
     fi
+else
+    warn "git-ai setup completed, but the command is not yet available in this shell."
 fi
 
 refresh_git_ai_install_hooks
