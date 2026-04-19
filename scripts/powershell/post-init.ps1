@@ -1,25 +1,25 @@
 #!/usr/bin/env pwsh
-<#!
+<#
 .SYNOPSIS
-    Post-init hook for Speckit: automatically installs, updates, and configures git-ai.
+    Post-init hook for Speckit: automatically installs and configures git-ai.
 .DESCRIPTION
     This script is called by `specify init` after project scaffolding completes.
-    It ensures git-ai is installed, upgraded when already present, and hooks are
+    It ensures git-ai is installed via the official installer flow and hooks are
     configured so that every commit automatically records AI authorship data.
 
     Behaviour:
     1. Detect whether git-ai is already installed (PATH or default install path).
-    2. If already installed, attempt `git-ai upgrade` (or `git-ai upgrade --force`).
-    3. If not installed, or if upgrade fails, download and run the official installer.
+    2. If git-ai is missing, or if -Force is provided, download and run the official installer.
+    3. If git-ai already exists and -Force is not provided, keep the current install.
     4. Refresh git-ai install-hooks configuration.
-    5. All failures emit warnings but never block Speckit initialization.
+    5. Emit troubleshooting logs without blocking Speckit initialization on failure.
 
     Environment variables:
     - GIT_AI_INSTALLER_URL: Override the default installer download URL.
 .EXAMPLE
     .\.specify\scripts\powershell\post-init.ps1
 .EXAMPLE
-    .\.specify\scripts\powershell\post-init.ps1 -Force   # Force git-ai reinstall/upgrade even if present
+    .\.specify\scripts\powershell\post-init.ps1 -Force   # Force git-ai reinstall via the remote installer
 .EXAMPLE
     .\.specify\scripts\powershell\post-init.ps1 -Skip     # Skip git-ai setup entirely
 #>
@@ -59,6 +59,11 @@ function Write-PostInitWarning {
     Write-Warning "[speckit/post-init] $Message"
 }
 
+function Write-PostInitDetail {
+    param([string]$Message)
+    Write-Host "[speckit/post-init] $Message" -ForegroundColor DarkGray
+}
+
 function Get-GitAiCommand {
     $command = Get-Command git-ai -ErrorAction SilentlyContinue
     if ($command -and $command.Path) {
@@ -76,38 +81,16 @@ function Invoke-GitAiInstaller {
     $tempInstaller = Join-Path ([System.IO.Path]::GetTempPath()) ("git-ai-install-{0}.ps1" -f [System.Guid]::NewGuid().ToString('N'))
 
     try {
-        Write-PostInitInfo "Downloading git-ai installer from GitHub..."
+        Write-PostInitInfo 'Downloading git-ai installer from the configured source...'
+        Write-PostInitDetail "Installer URL: $GitAiInstallScriptUrl"
+        Write-PostInitDetail "Temporary installer path: $tempInstaller"
         Invoke-WebRequest -Uri $GitAiInstallScriptUrl -OutFile $tempInstaller -UseBasicParsing
+        Write-PostInitDetail 'Installer download completed. Executing installer script...'
         & $tempInstaller
+        Write-PostInitDetail 'Installer execution completed.'
     } finally {
         Remove-Item -LiteralPath $tempInstaller -ErrorAction SilentlyContinue
-    }
-}
-
-function Invoke-GitAiUpgrade {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$GitAiCommand,
-        [switch]$ForceUpgrade
-    )
-
-    $upgradeArgs = @('upgrade')
-    if ($ForceUpgrade) {
-        $upgradeArgs += '--force'
-    }
-
-    try {
-        Write-PostInitInfo 'Checking for git-ai updates...'
-        & $GitAiCommand @upgradeArgs | Out-Host
-        if ($LASTEXITCODE -eq 0) {
-            return $true
-        }
-
-        Write-PostInitWarning "git-ai upgrade exited with code $LASTEXITCODE."
-        return $false
-    } catch {
-        Write-PostInitWarning "git-ai upgrade failed: $_"
-        return $false
+        Write-PostInitDetail 'Temporary installer file removed.'
     }
 }
 
@@ -115,12 +98,13 @@ function Refresh-GitAiInstallHooks {
     $gitAiCommand = Get-GitAiCommand
 
     if (-not $gitAiCommand) {
-        Write-PostInitWarning "git-ai is not available in this shell. The installer already ran install-hooks; if needed, run 'git-ai install-hooks' manually after your PATH is refreshed."
+        Write-PostInitWarning "git-ai is not available in this shell after setup. Checked PATH and '$GitAiExecutablePath'. The installer already ran install-hooks; if needed, run 'git-ai install-hooks' manually after your PATH is refreshed."
         return
     }
 
     try {
         Write-PostInitInfo 'Refreshing git-ai install-hooks configuration...'
+        Write-PostInitDetail "Using git-ai command for install-hooks: $gitAiCommand"
         & $gitAiCommand install-hooks | Out-Host
         if ($LASTEXITCODE -eq 0) {
             Write-PostInitSuccess 'git-ai install-hooks completed successfully.'
@@ -134,6 +118,11 @@ function Refresh-GitAiInstallHooks {
 
 # ─── Main ─────────────────────────────────────────────────────
 
+Write-PostInitInfo 'Starting git-ai post-init.'
+Write-PostInitDetail "Working directory: $((Get-Location).Path)"
+Write-PostInitDetail "Force=$([bool]$Force); Skip=$([bool]$Skip)"
+Write-PostInitDetail "Configured installer URL: $GitAiInstallScriptUrl"
+
 if ($Skip) {
     Write-PostInitInfo 'Skipping git-ai setup because -Skip was provided.'
     exit 0
@@ -141,6 +130,8 @@ if ($Skip) {
 
 $existingCommand = Get-GitAiCommand
 if ($existingCommand) {
+    Write-PostInitDetail "Resolved existing git-ai command: $existingCommand"
+
     $version = & $existingCommand --version 2>$null
     if ($version) {
         Write-PostInitSuccess "git-ai detected: $version"
@@ -148,8 +139,8 @@ if ($existingCommand) {
         Write-PostInitSuccess 'git-ai detected.'
     }
 
-    if (-not (Invoke-GitAiUpgrade -GitAiCommand $existingCommand -ForceUpgrade:$Force)) {
-        Write-PostInitWarning 'Falling back to installer-based git-ai update.'
+    if ($Force) {
+        Write-PostInitInfo 'Force requested. Re-running the official git-ai installer.'
         try {
             Invoke-GitAiInstaller
         } catch {
@@ -157,8 +148,12 @@ if ($existingCommand) {
             Write-PostInitWarning 'You can rerun this script later without blocking Spec Kit initialization.'
             exit 0
         }
+    } else {
+        Write-PostInitInfo 'git-ai already installed. Skipping remote installer because -Force was not provided.'
     }
 } else {
+    Write-PostInitInfo 'git-ai not detected. Running the official installer.'
+
     try {
         Invoke-GitAiInstaller
     } catch {
@@ -170,6 +165,8 @@ if ($existingCommand) {
 
 $resolvedCommand = Get-GitAiCommand
 if ($resolvedCommand) {
+    Write-PostInitDetail "Resolved git-ai command after setup: $resolvedCommand"
+
     $version = & $resolvedCommand --version 2>$null
     if ($version) {
         Write-PostInitSuccess "git-ai ready: $version"
@@ -177,7 +174,7 @@ if ($resolvedCommand) {
         Write-PostInitSuccess 'git-ai ready.'
     }
 } else {
-    Write-PostInitWarning 'git-ai setup completed, but the command is not yet available in this shell. The default install path will still be used if present.'
+    Write-PostInitWarning "git-ai setup completed, but the command is not yet available in this shell. Checked PATH and '$GitAiExecutablePath'."
 }
 
 Refresh-GitAiInstallHooks
