@@ -78,9 +78,23 @@ function Get-TargetCommits {
     $gitArgs = @("log", "--format=%H")
 
     if ($Commits) {
+        $repoRoot = Get-RepoRoot
         $explicitCommits = @($Commits -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-        Write-UploadTrace "[upload-ai-stats] Using explicit commit list ($($explicitCommits.Count))."
-        return $explicitCommits
+
+        # Resolve short SHAs to full 40-char SHAs so they match authorship note lookup keys
+        $resolvedCommits = @()
+        foreach ($rawSha in $explicitCommits) {
+            $resolveResult = Invoke-ProcessCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'rev-parse', '--verify', "$rawSha^{commit}")
+            $fullSha = $resolveResult.StdOut.Trim()
+            if ($resolveResult.ExitCode -eq 0 -and $fullSha) {
+                $resolvedCommits += $fullSha
+            } else {
+                Write-UploadWarning "[upload-ai-stats] Failed to resolve commit '$rawSha': $(Format-ProcessFailureDetail -ProcessResult $resolveResult)"
+            }
+        }
+
+        Write-UploadTrace "[upload-ai-stats] Using explicit commit list ($($resolvedCommits.Count))."
+        return $resolvedCommits
     }
 
     if ($Since) { $gitArgs += "--since=$Since" }
@@ -1036,118 +1050,142 @@ function Add-FileToolModelBreakdown {
 function Get-CommitAiFileStats {
     param([string]$CommitSha)
 
-    $diffCommandResult = Invoke-ProcessCapture -FilePath 'git-ai' -Arguments @('diff', $CommitSha, '--json', '--include-stats')
-    $diffJson = $diffCommandResult.StdOut
+    $repoRoot = Get-RepoRoot
     $shortSha = $CommitSha.Substring(0, [Math]::Min(7, $CommitSha.Length))
-    if ($diffCommandResult.ExitCode -ne 0) {
-        Write-UploadTrace "[upload-ai-stats] $shortSha : file-level git-ai diff unavailable: $(Format-ProcessFailureDetail -ProcessResult $diffCommandResult)"
+
+    # Step 1: Per-file added/deleted line counts from git diff-tree --numstat
+    $numstatResult = Invoke-ProcessCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'diff-tree', '--no-commit-id', '--numstat', '-r', $CommitSha)
+    if ($numstatResult.ExitCode -ne 0 -or -not $numstatResult.StdOut) {
+        Write-UploadTrace "[upload-ai-stats] $shortSha : git diff-tree --numstat unavailable"
         return @()
     }
 
-    if (-not $diffJson) {
-        Write-UploadTrace "[upload-ai-stats] $shortSha : file-level git-ai diff returned no payload."
+    $fileLineCounts = [ordered]@{}
+    foreach ($numLine in ($numstatResult.StdOut -split "`n")) {
+        $numLine = $numLine.Trim()
+        if (-not $numLine) { continue }
+        $parts = $numLine -split "`t", 3
+        if ($parts.Count -lt 3) { continue }
+        $added   = if ($parts[0] -eq '-') { 0 } else { [int]$parts[0] }
+        $deleted = if ($parts[1] -eq '-') { 0 } else { [int]$parts[1] }
+        $fileLineCounts[$parts[2]] = @{ added = $added; deleted = $deleted }
+    }
+
+    if ($fileLineCounts.Count -eq 0) {
         return @()
     }
 
-    try {
-        $diffData = $diffJson | ConvertFrom-Json
-    } catch {
-        $diffPreview = Get-CompactProcessText -Text $diffJson
-        if ($diffPreview) {
-            Write-UploadWarning "[upload-ai-stats] Failed to parse file details for $shortSha. stdout=$diffPreview"
-        } else {
-            Write-UploadWarning "[upload-ai-stats] Failed to parse file details for $shortSha."
+    # Step 2: Read the commit's own authorship note (commit-local, no provenance tracing)
+    $noteResult = Invoke-ProcessCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'notes', '--ref=ai', 'show', $CommitSha)
+
+    $fileAttestations = @{}
+    $promptsMetadata  = @{}
+
+    if ($noteResult.ExitCode -eq 0 -and $noteResult.StdOut) {
+        $noteText = $noteResult.StdOut
+        # Note format: attestation lines before "---", JSON metadata after "---"
+        $sepMatch = [regex]::Match($noteText, '(?m)^---\s*$')
+        $attestationText = ''
+        $jsonText = ''
+        if ($sepMatch.Success) {
+            $attestationText = $noteText.Substring(0, $sepMatch.Index)
+            $jsonText = $noteText.Substring($sepMatch.Index + $sepMatch.Length)
         }
-        return @()
-    }
 
-    $fileStatsLookup = @{}
-    $promptLookup = @{}
-    foreach ($promptEntry in (Get-ObjectEntries -Object (Get-ResponsePropertyValue -Object $diffData -Names @('prompts')))) {
-        $promptLookup[[string]$promptEntry.Name] = $promptEntry.Value
-    }
-
-    $annotatedPromptIdsByFile = @{}
-    foreach ($fileEntry in (Get-ObjectEntries -Object (Get-ResponsePropertyValue -Object $diffData -Names @('files')))) {
-        $filePath = [string]$fileEntry.Name
-        if ([string]::IsNullOrWhiteSpace($filePath)) {
-            continue
+        # Parse JSON metadata for prompt tool/model info
+        if ($jsonText) {
+            try {
+                $metadata = $jsonText.Trim() | ConvertFrom-Json
+                $prompts = Get-ResponsePropertyValue -Object $metadata -Names @('prompts')
+                if ($prompts) {
+                    foreach ($pe in (Get-ObjectEntries -Object $prompts)) {
+                        $promptsMetadata[[string]$pe.Name] = $pe.Value
+                    }
+                }
+            } catch {
+                Write-UploadTrace "[upload-ai-stats] $shortSha : failed to parse authorship note JSON metadata"
+            }
         }
 
-        $fileStats = Get-OrCreate-FileStatsAccumulator -Lookup $fileStatsLookup -FilePath $filePath
-        $annotatedPromptIdsByFile[$filePath] = @{}
+        # Parse attestation section: non-indented line = file path, indented = "<id> <range>"
+        $currentFile = $null
+        foreach ($attLine in ($attestationText -split "`n")) {
+            if ([string]::IsNullOrWhiteSpace($attLine)) { continue }
 
-        $annotations = Get-ResponsePropertyValue -Object $fileEntry.Value -Names @('annotations')
-        foreach ($annotationEntry in (Get-ObjectEntries -Object $annotations)) {
-            $promptId = [string]$annotationEntry.Name
-            if ([string]::IsNullOrWhiteSpace($promptId)) {
+            if ($attLine -match '^\S') {
+                $currentFile = $attLine.Trim()
+                if (-not $fileAttestations.ContainsKey($currentFile)) {
+                    $fileAttestations[$currentFile] = @{ ai = 0; human = 0; tool_model_breakdown = @{} }
+                }
                 continue
             }
 
+            if (-not $currentFile) { continue }
+            if ($attLine -notmatch '^\s+(\S+)\s+(.+)$') { continue }
+
+            $entryId  = $Matches[1]
+            $rangeStr = $Matches[2]
             $lineCount = 0
-            foreach ($rangeEntry in (Convert-ToObjectArray -Value $annotationEntry.Value)) {
-                $lineCount += Get-LineRangeCount -RangeValue $rangeEntry
-            }
-
-            if ($lineCount -le 0) {
-                continue
-            }
-
-            $annotatedPromptIdsByFile[$filePath][$promptId] = $true
-            $fileStats['ai_additions'] = [int]$fileStats['ai_additions'] + $lineCount
-            Add-FileToolModelBreakdown -FileStats $fileStats -PromptLookup $promptLookup -PromptId $promptId -LineCount $lineCount
-        }
-    }
-
-    foreach ($hunk in (Convert-ToObjectArray -Value (Get-ResponsePropertyValue -Object $diffData -Names @('hunks')))) {
-        $filePath = [string](Get-ResponsePropertyValue -Object $hunk -Names @('file_path', 'filePath'))
-        if ([string]::IsNullOrWhiteSpace($filePath)) {
-            continue
-        }
-
-        $fileStats = Get-OrCreate-FileStatsAccumulator -Lookup $fileStatsLookup -FilePath $filePath
-        $startLine = Get-ResponsePropertyValue -Object $hunk -Names @('start_line', 'startLine')
-        $endLine = Get-ResponsePropertyValue -Object $hunk -Names @('end_line', 'endLine')
-        if ($null -eq $startLine -or $null -eq $endLine) {
-            continue
-        }
-
-        $lineCount = [Math]::Max(0, ([int]$endLine - [int]$startLine + 1))
-        if ($lineCount -le 0) {
-            continue
-        }
-
-        $hunkKind = [string](Get-ResponsePropertyValue -Object $hunk -Names @('hunk_kind', 'hunkKind'))
-        switch ($hunkKind) {
-            'addition' {
-                $fileStats['git_diff_added_lines'] = [int]$fileStats['git_diff_added_lines'] + $lineCount
-
-                $promptId = [string](Get-ResponsePropertyValue -Object $hunk -Names @('prompt_id', 'promptId'))
-                $humanId = [string](Get-ResponsePropertyValue -Object $hunk -Names @('human_id', 'humanId'))
-                if (-not [string]::IsNullOrWhiteSpace($promptId)) {
-                    if (-not $annotatedPromptIdsByFile.ContainsKey($filePath)) {
-                        $annotatedPromptIdsByFile[$filePath] = @{}
-                    }
-
-                    if (-not $annotatedPromptIdsByFile[$filePath].ContainsKey($promptId)) {
-                        $fileStats['ai_additions'] = [int]$fileStats['ai_additions'] + $lineCount
-                        Add-FileToolModelBreakdown -FileStats $fileStats -PromptLookup $promptLookup -PromptId $promptId -LineCount $lineCount
-                    }
-                } elseif (-not [string]::IsNullOrWhiteSpace($humanId)) {
-                    $fileStats['human_additions'] = [int]$fileStats['human_additions'] + $lineCount
-                } else {
-                    $fileStats['unknown_additions'] = [int]$fileStats['unknown_additions'] + $lineCount
+            foreach ($rp in ($rangeStr -split ',')) {
+                $rp = $rp.Trim()
+                if ($rp -match '^(\d+)-(\d+)$') {
+                    $lineCount += [int]$Matches[2] - [int]$Matches[1] + 1
+                } elseif ($rp -match '^\d+$') {
+                    $lineCount += 1
                 }
             }
-            'deletion' {
-                $fileStats['git_diff_deleted_lines'] = [int]$fileStats['git_diff_deleted_lines'] + $lineCount
+            if ($lineCount -le 0) { continue }
+
+            if (-not $fileAttestations.ContainsKey($currentFile)) {
+                $fileAttestations[$currentFile] = @{ ai = 0; human = 0; tool_model_breakdown = @{} }
+            }
+
+            if ($entryId -like 'h_*') {
+                $fileAttestations[$currentFile]['human'] += $lineCount
+            } else {
+                $fileAttestations[$currentFile]['ai'] += $lineCount
+
+                # Build tool_model_breakdown from prompt metadata
+                $tool = 'unknown'; $model = $null
+                if ($promptsMetadata.ContainsKey($entryId)) {
+                    $agentId = Get-ResponsePropertyValue -Object $promptsMetadata[$entryId] -Names @('agent_id', 'agentId')
+                    $toolVal  = Get-ResponsePropertyValue -Object $agentId -Names @('tool')
+                    $modelVal = Get-ResponsePropertyValue -Object $agentId -Names @('model')
+                    if ($toolVal) { $tool = [string]$toolVal }
+                    if ($modelVal) { $model = [string]$modelVal }
+                }
+                $bkKey = if ([string]::IsNullOrWhiteSpace($model)) { $tool } else { '{0}::{1}' -f $tool, $model }
+                if (-not $fileAttestations[$currentFile]['tool_model_breakdown'].ContainsKey($bkKey)) {
+                    $fileAttestations[$currentFile]['tool_model_breakdown'][$bkKey] = @{ ai_additions = 0 }
+                }
+                $fileAttestations[$currentFile]['tool_model_breakdown'][$bkKey]['ai_additions'] += $lineCount
             }
         }
     }
 
-    return @($fileStatsLookup.Keys | Sort-Object | ForEach-Object {
-        [pscustomobject]$fileStatsLookup[$_]
-    })
+    # Step 3: Build per-file stats from numstat + attestation
+    $results = @()
+    foreach ($filePath in $fileLineCounts.Keys) {
+        $lc  = $fileLineCounts[$filePath]
+        $att = if ($fileAttestations.ContainsKey($filePath)) { $fileAttestations[$filePath] } else { $null }
+
+        $aiAdd    = if ($att) { [Math]::Min([int]$att['ai'], $lc.added) } else { 0 }
+        $humanAdd = if ($att) { [Math]::Min([int]$att['human'], [Math]::Max(0, $lc.added - $aiAdd)) } else { $lc.added }
+        $unknown  = [Math]::Max(0, $lc.added - $aiAdd - $humanAdd)
+        $breakdown = if ($att) { $att['tool_model_breakdown'] } else { @{} }
+
+        $results += [pscustomobject]@{
+            file_path              = $filePath
+            git_diff_added_lines   = $lc.added
+            git_diff_deleted_lines = $lc.deleted
+            ai_additions           = $aiAdd
+            human_additions        = $humanAdd
+            unknown_additions      = $unknown
+            tool_model_breakdown   = $breakdown
+        }
+    }
+
+    return @($results)
 }
 
 function Get-NormalizedUploadSource {
@@ -1274,7 +1312,8 @@ function New-CommitUploadItem {
     )
 
     $repoRoot = Get-RepoRoot
-    $commitInfoResult = Invoke-ProcessCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'log', '-1', '--format=%ae|%s|%aI', $CommitSha)
+    # Use record separator (0x1e) as delimiter to avoid conflicts with | in commit messages
+    $commitInfoResult = Invoke-ProcessCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'log', '-1', '--format=%ae%x1e%s%x1e%aI', $CommitSha)
     $commitInfo = $commitInfoResult.StdOut.Trim()
     if ($commitInfoResult.ExitCode -ne 0 -or -not $commitInfo) {
         $shortSha = $CommitSha.Substring(0, [Math]::Min(7, $CommitSha.Length))
@@ -1282,7 +1321,8 @@ function New-CommitUploadItem {
         return $null
     }
 
-    $parts = $commitInfo -split '\|', 3
+    $recordSep = [char]0x1e
+    $parts = $commitInfo -split [regex]::Escape($recordSep), 3
     $formattedTimestamp = if ($parts.Count -ge 3) { Convert-CommitTimestampToUploadFormat -Timestamp $parts[2] } else { "" }
     return @{
         commitSha = $CommitSha
@@ -1362,7 +1402,7 @@ function Convert-BatchUploadResponse {
             $status = if ($succeeded) { 'uploaded' } else { 'failed' }
         }
 
-        $error = if ($responseItem) {
+        $responseError = if ($responseItem) {
             Get-ResponsePropertyValue -Object $responseItem -Names @('error', 'errorMessage', 'message', 'reason')
         } else {
             $null
@@ -1372,7 +1412,7 @@ function Convert-BatchUploadResponse {
             commitSha = [string]$commitItem.commitSha
             succeeded = $succeeded
             status = [string]$status
-            error = if ($error) { [string]$error } else { $null }
+            error = if ($responseError) { [string]$responseError } else { $null }
             hasAuthorshipNote = [bool]$commitItem.hasAuthorshipNote
             stats = $commitItem.stats
         }
