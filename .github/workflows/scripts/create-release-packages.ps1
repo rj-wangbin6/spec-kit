@@ -46,6 +46,8 @@ $ErrorActionPreference = "Stop"
 # Disable progress bar to avoid PowerShell 5.1 Archive module bug
 $ProgressPreference = 'SilentlyContinue'
 
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
 # Validate version format
 if ($Version -notmatch '^[rv]\d+\.\d+\.\d+$') {
     Write-Error "Version must look like v0.0.0 or r0.0.0"
@@ -496,7 +498,18 @@ function Build-Variant {
     $prevProgressPref = $ProgressPreference
     $ProgressPreference = 'SilentlyContinue'
     try {
-        Compress-Archive -Path "$baseDir/*" -DestinationPath $zipFile -Force
+        if (Test-Path $zipFile) {
+            Remove-Item -Path $zipFile -Force -ErrorAction SilentlyContinue
+        }
+
+        # Use ZipFile directly to avoid intermittent file-lock failures from
+        # the Windows PowerShell Archive module when packaging freshly written files.
+        [System.IO.Compression.ZipFile]::CreateFromDirectory(
+            $baseDir,
+            $zipFile,
+            [System.IO.Compression.CompressionLevel]::Optimal,
+            $false
+        )
         Write-Host "Created $zipFile"
     } finally {
         $ProgressPreference = $prevProgressPref

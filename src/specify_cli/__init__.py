@@ -1530,6 +1530,38 @@ SCRIPT_TYPE_POST_INIT = {
 }
 
 
+def _resolve_post_init_shell(script_type: str) -> list[str] | None:
+    """Return the launcher command prefix for the requested post-init script type."""
+    if script_type == "ps":
+        shell = shutil.which("pwsh") or shutil.which("powershell")
+        if not shell:
+            return None
+        return [shell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File"]
+    if script_type == "sh":
+        shell = shutil.which("bash")
+        if not shell:
+            return None
+        return [shell]
+    return None
+
+
+def _get_post_init_skip_reason(project_path: Path, script_type: str) -> str:
+    """Return a user-facing reason when a post-init hook cannot be launched."""
+    rel = SCRIPT_TYPE_POST_INIT.get(script_type)
+    if not rel:
+        return "unsupported script type"
+
+    script_path = project_path / rel
+    if not script_path.exists():
+        return "script not found"
+
+    if script_type == "ps":
+        return "PowerShell not found"
+    if script_type == "sh":
+        return "bash not found"
+    return "launcher not found"
+
+
 def _get_post_init_command(project_path: Path, script_type: str) -> list[str] | None:
     """Resolve the post-init script path and return the command to execute it.
 
@@ -1541,9 +1573,10 @@ def _get_post_init_command(project_path: Path, script_type: str) -> list[str] | 
     script_path = project_path / rel
     if not script_path.exists():
         return None
-    if script_type == "ps":
-        return ["pwsh", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_path)]
-    return ["bash", str(script_path)]
+    shell_cmd = _resolve_post_init_shell(script_type)
+    if not shell_cmd:
+        return None
+    return [*shell_cmd, str(script_path)]
 
 
 def run_post_init_script(
@@ -1555,14 +1588,20 @@ def run_post_init_script(
 
     Failures are logged as warnings and never abort ``specify init``.
     """
-    if tracker:
-        tracker.start("post-init")
-
     cmd = _get_post_init_command(project_path, script_type)
     if not cmd:
+        reason = _get_post_init_skip_reason(project_path, script_type)
         if tracker:
-            tracker.skip("post-init", "script not found")
+            tracker.skip("post-init", reason)
+        console.print(f"[yellow]Warning: post-init skipped: {reason}[/yellow]")
         return
+
+    launcher_name = Path(cmd[0]).name
+    if tracker:
+        tracker.start("post-init", launcher_name)
+    console.print(
+        f"[cyan]Running post-init hook:[/cyan] {SCRIPT_TYPE_POST_INIT.get(script_type, 'post-init')} via {launcher_name}"
+    )
 
     try:
         result = subprocess.run(
@@ -1576,18 +1615,15 @@ def run_post_init_script(
         else:
             if tracker:
                 tracker.error("post-init", f"exit code {result.returncode}")
-            else:
-                console.print(f"[yellow]Warning: post-init script exited with code {result.returncode}[/yellow]")
+            console.print(f"[yellow]Warning: post-init script exited with code {result.returncode}[/yellow]")
     except subprocess.TimeoutExpired:
         if tracker:
             tracker.error("post-init", "timed out (120s)")
-        else:
-            console.print("[yellow]Warning: post-init script timed out[/yellow]")
+        console.print("[yellow]Warning: post-init script timed out[/yellow]")
     except Exception as e:
         if tracker:
             tracker.error("post-init", str(e))
-        else:
-            console.print(f"[yellow]Warning: post-init failed: {e}[/yellow]")
+        console.print(f"[yellow]Warning: post-init failed: {e}[/yellow]")
 
 
 def save_init_options(project_path: Path, options: dict[str, Any]) -> None:

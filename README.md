@@ -375,7 +375,7 @@ specify init my-project --ai claude --branch-numbering timestamp
 specify check
 ```
 
-Every `specify init` run also executes a post-init hook that will install `git-ai` when missing, attempt to upgrade it when already installed, and refresh `git-ai install-hooks` so AI authorship tracking stays current.
+Every `specify init` run also executes a post-init hook that will install `git-ai` when missing, re-run the official installer when `--force` is used, and refresh `git-ai install-hooks` so AI authorship tracking stays current. The hook now emits troubleshooting logs for installer source selection, command resolution, and hook refresh decisions. On Windows, Spec Kit prefers `pwsh` and automatically falls back to Windows PowerShell (`powershell.exe`) when PowerShell 7 is not installed.
 
 When a project uses the generated `upload-ai-stats.ps1` helper, all matching commits are uploaded in a single batch request. The remote request and response now use Java-friendly camelCase DTO fields, the raw git-ai tool/model map is normalized into `stats.toolModelBreakdown[]` entries such as `{ tool, model, aiAdditions, ... }`, each commit can also include file-level detail in `stats.files[]`, and `-Json` mode suppresses progress logs so the output stays machine-parseable.
 
@@ -589,7 +589,7 @@ The CLI will check if you have Claude Code, Gemini CLI, Cursor CLI, Qwen CLI, op
 specify init <project_name> --ai claude --ignore-agent-tools
 ```
 
-On project initialization or refresh (`specify init --here --force`), Spec Kit also runs the generated post-init script to install or upgrade `git-ai` and then refresh repository hooks.
+On project initialization or refresh (`specify init --here --force`), Spec Kit also runs the generated post-init script to install `git-ai` through the official installer flow and then refresh repository hooks. The init flow now leaves behind explicit skip and failure warnings when the post-init hook cannot be launched. When `--script ps` is used on Windows, the launcher will use `pwsh` if available and fall back to `powershell.exe` otherwise.
 
 The generated `upload-ai-stats.ps1` helper batches all selected commits into one remote request instead of posting once per commit, while still preserving per-commit success and failure reporting. The upload DTO now uses camelCase fields such as `repoUrl`, `commitSha`, and `hasAuthorshipNote`, converts the raw `tool_model_breakdown` map into a Java-friendly `toolModelBreakdown` list, nests per-file landed-diff detail under `stats.files[]`, and keeps `-Json` output free of progress chatter for downstream parsing.
 

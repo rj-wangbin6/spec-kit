@@ -671,9 +671,13 @@ await mcp_upload-doc_create_code_review_issue({
 
 1. **调用上传脚本**
    - 执行: `.specify/scripts/powershell/upload-ai-stats.ps1 -Commits "<逗号分隔的SHA>"`
-  - 脚本内部会优先读取 `GIT_AI_REPORT_REMOTE_URL`
-  - 如果未提供完整 URL，则要求同时配置 `GIT_AI_REPORT_REMOTE_ENDPOINT` + `GIT_AI_REPORT_REMOTE_PATH`
+  - 如果未显式配置 URL，脚本默认调用 `https://service-gw.ruijie.com.cn/api/ai-cr-manage-service/api/public/upload/ai-stats`
+  - 如需覆盖，脚本会优先读取 `GIT_AI_REPORT_REMOTE_URL`
+  - 也可通过 `GIT_AI_REPORT_REMOTE_ENDPOINT` + `GIT_AI_REPORT_REMOTE_PATH` 覆盖，默认值分别为 `https://service-gw.ruijie.com.cn` 和 `/api/ai-cr-manage-service/api/public/upload/ai-stats`
   - `GIT_AI_REPORT_REMOTE_API_KEY` 用于认证（可选）
+    - `GIT_AI_REPORT_REMOTE_USER_ID` 如果存在，会优先作为 `X-USER-ID` 请求头
+  - 如果未设置 `GIT_AI_REPORT_REMOTE_USER_ID`，脚本会继续尝试从本机 VS Code / IDEA 的 MCP 配置中读取 `X-USER-ID`
+  - 可通过 `GIT_AI_VSCODE_MCP_CONFIG_PATH` / `GIT_AI_IDEA_MCP_CONFIG_PATH` 覆盖默认配置文件探测路径
   - 脚本会将这些 commit 组装为一次批量请求，并按 `results[]` 逐条解析返回状态
 
 2. **在审查报告末尾追加 AI 代码使用统计表格**
@@ -681,14 +685,16 @@ await mcp_upload-doc_create_code_review_issue({
 ```markdown
 ## AI 代码使用统计
 
-| Commit | 作者 | 总新增行 | 已知人工 | 未知/未归因 | 纯 AI 接受 | 混编 | AI 占比 | Note | 主要工具 |
-|--------|------|---------|---------|------------|------------|------|---------|------|---------|
-| abc123d | 张三 | 200 | 105 | 15 | 65 | 15 | 40% | 有 | copilot / gpt-4o |
-| **合计** | — | **350** | **195** | **45** | **90** | **20** | **31%** | — | — |
+| Commit | 作者 | 总新增行 | AI归因新增 | 已知人工 | 未知/未归因 | AI 占比 | Note | 主要工具 |
+|--------|------|---------|-----------|---------|------------|---------|------|---------|
+| abc123d | 张三 | 200 | 80 | 105 | 15 | 40% | 有 | copilot / gpt-4o |
+| def456a | 张三 | 150 | 0 | 90 | 60 | 0% | 无 | — |
+| **合计** | — | **350** | **80** | **195** | **75** | **23%** | — | — |
 
 > **数据来源：** git-ai authorship note (`refs/notes/ai`)
 > **AI 占比** = `stats.aiAdditions / stats.gitDiffAddedLines`
-> **已知人工** = `stats.humanAdditions`；**未知/未归因** = `stats.unknownAdditions`
+> **当前默认展示口径** = `stats.aiAdditions`、`stats.humanAdditions`、`stats.unknownAdditions`
+> **mixedAdditions** = 仍保留在原始 `stats` 中，但当前预览和报告摘要不单独展示
 > **主要工具** = `stats.toolModelBreakdown` 中 `aiAdditions` 最大的项，展示为 `tool / model`
 > **逐文件明细** = 如需 drill-down，可读取 `stats.files[]`，其中包含 `filePath`、`gitDiffAddedLines`、`gitDiffDeletedLines`、`aiAdditions`、`humanAdditions`、`unknownAdditions` 与文件级 `toolModelBreakdown`
 ```
