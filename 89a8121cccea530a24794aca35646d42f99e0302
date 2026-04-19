@@ -1,0 +1,47 @@
+scripts/powershell/upload-ai-stats.ps1
+  12b6cb2043393d8c 81,83-97,1053,1055-1059,1063-1071,1074,1078-1079,1081-1107,1110-1113,1115-1119,1123-1127,1129-1135,1137,1139-1140,1143-1162,1166-1184,1188,1315-1316,1324-1325,1405,1415
+test-verify/.specify/scripts/powershell/upload-ai-stats.ps1
+  12b6cb2043393d8c 81,83-97,1053,1055-1059,1063-1071,1074,1078-1079,1081-1107,1110-1113,1115-1119,1123-1127,1129-1135,1137,1139-1140,1143-1162,1166-1184,1188,1315-1316,1324-1325,1405,1415
+docs/upload-ai-stats-file-level-counting.md
+  12b6cb2043393d8c 1-41
+.specify/scripts/powershell/upload-ai-stats.ps1
+  12b6cb2043393d8c 81,83-97,1053,1055-1059,1063-1071,1074,1078-1079,1081-1107,1110-1113,1115-1119,1123-1127,1129-1135,1137,1139-1140,1143-1162,1166-1184,1188,1315-1316,1324-1325,1405,1415
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "89a8121cccea530a24794aca35646d42f99e0302",
+  "prompts": {
+    "12b6cb2043393d8c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "edf065d2-e4db-4eca-8783-282cc4badc64",
+        "model": "copilot/gpt-5.4"
+      },
+      "human_author": "gaoang",
+      "messages": [],
+      "total_additions": 724,
+      "total_deletions": 557,
+      "accepted_lines": 509,
+      "overriden_lines": 0
+    },
+    "591137922d904f0a": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f8c60aa3-0da3-4230-b397-51536fa78689",
+        "model": "copilot/gpt-5.4"
+      },
+      "human_author": "gaoang",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  },
+  "humans": {
+    "h_602db118073c06": {
+      "author": "gaoang"
+    }
+  }
+}
