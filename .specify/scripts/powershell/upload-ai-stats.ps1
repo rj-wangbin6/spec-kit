@@ -1440,7 +1440,7 @@ function Send-AiStatsBatchToRemote {
         branch = $branch
         source = (Get-NormalizedUploadSource -Value $Source)
         reviewDocumentId = if ($ReviewDocumentId) { $ReviewDocumentId } else { $null }
-        authorshipSchemaVersion = 'authorship/3.0.0'
+        authorshipSchemaVersion = 'authorship/3.1.0'
         commits = $CommitItems
     }
     $payload = ConvertTo-Json -InputObject $payload -Depth 12
