@@ -1,0 +1,29 @@
+docs/review-results/code-review-2026-04-23-design-compliance.md
+  238a790a1653f1bc 1-238
+.specify/scripts/powershell/upload-ai-stats.ps1
+  h_602db118073c06 1443
+test-verify/.specify/scripts/powershell/upload-ai-stats.ps1
+  h_602db118073c06 1443
+scripts/powershell/upload-ai-stats.ps1
+  h_602db118073c06 1443
+---
+{
+  "schema_version": "authorship/3.1.0",
+  "git_ai_version": "development:1.3.3",
+  "base_commit_sha": "d2253cdb68622e002627d25d8647db9121eb860f",
+  "prompts": {
+    "238a790a1653f1bc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d554ad13-63f0-4c1d-bd42-6b8e07b12a61",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "gaoang <gaoang@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 238,
+      "total_deletions": 0,
+      "accepted_lines": 238,
+      "overriden_lines": 0
+    }
+  }
+}
