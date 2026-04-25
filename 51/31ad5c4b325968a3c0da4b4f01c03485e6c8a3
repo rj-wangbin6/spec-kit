@@ -1,0 +1,59 @@
+scripts/powershell/post-init.ps1
+  c850cea6f857d18d 2,4,7,12-13,15,22,62-66,84-86,88,90,93,101,107,121-125,133-134,142-143,151-152,155-156,168-169,177
+README.md
+  c850cea6f857d18d 378,592
+.github/workflows/scripts/create-release-packages.ps1
+  05e772d3a26c9177 49-50,501-512
+test-verify/.specify/scripts/powershell/post-init.ps1
+  c850cea6f857d18d 2,4,7,12-13,15,22,62-66,84-86,88,90,93,101,107,121-125,133-134,142-143,151-152,155-156,168-169,177
+templates/commands/code-review.md
+  h_602db118073c06 674,676
+  c850cea6f857d18d 675,678-680,688-692,696-697
+src/specify_cli/__init__.py
+  05e772d3a26c9177 1533-1564,1576-1579
+  c850cea6f857d18d 1593,1595-1596,1599-1605,1618,1622,1626
+.specify/scripts/powershell/post-init.ps1
+  c850cea6f857d18d 2,4,7,12-13,15,22,62-66,84-86,88,90,93,101,107,121-125,133-134,142-143,151-152,155-156,168-169,177
+scripts/bash/post-init.sh
+  c850cea6f857d18d 2,5,10-11,19,44,62-64,75,79,81,88,93,103-107,114-115,123-124,130-131,134,143-144,152
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.1",
+  "base_commit_sha": "5131ad5c4b325968a3c0da4b4f01c03485e6c8a3",
+  "prompts": {
+    "05e772d3a26c9177": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "710ba49b-1e8e-4935-8816-754b20de4201",
+        "model": "copilot/gpt|copilot/claude"
+      },
+      "human_author": "gaoang",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 176,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/59a6a28abd60e083c89d4db2b72d0e59920c1d01221cd2a29e0a3f47316a8cfc"
+    },
+    "c850cea6f857d18d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5b23c07b-4e7e-407b-8605-cb289e4e25cf",
+        "model": "copilot/gpt-5.4"
+      },
+      "human_author": "gaoang",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 163,
+      "overriden_lines": 2,
+      "messages_url": "https://usegitai.com/cas/1d712e866cbbbba6f1d6b1b603f8704b03a6d1db05379832ee6078b55f1817de"
+    }
+  },
+  "humans": {
+    "h_602db118073c06": {
+      "author": "gaoang"
+    }
+  }
+}
