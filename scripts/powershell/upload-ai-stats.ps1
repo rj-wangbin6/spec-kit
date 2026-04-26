@@ -305,6 +305,7 @@ function Get-CommitAiStats {
     }
 
     $fileStats = @(Get-CommitAiFileStats -CommitSha $CommitSha)
+    $prompts = @(Get-CommitPromptUploadItems -CommitSha $CommitSha)
     if ($statsObject.PSObject.Properties.Name -contains 'files') {
         $statsObject.files = $fileStats
     } else {
@@ -316,6 +317,7 @@ function Get-CommitAiStats {
     return @{
         HasAuthorshipNote = $hasAuthorshipNote
         Stats = $statsObject
+        Prompts = $prompts
     }
 }
 
@@ -1016,23 +1018,15 @@ function Add-FileToolModelBreakdown {
         return
     }
 
-    $tool = 'unknown'
-    $model = $null
-
+    $normalizedPair = Resolve-ToolModelPair -AgentId $null -ToolValue $null -ModelValue $null
     if ($PromptLookup.ContainsKey($PromptId)) {
         $promptRecord = $PromptLookup[$PromptId]
         $agentId = Get-ResponsePropertyValue -Object $promptRecord -Names @('agent_id', 'agentId')
-        $toolValue = Get-ResponsePropertyValue -Object $agentId -Names @('tool')
-        $modelValue = Get-ResponsePropertyValue -Object $agentId -Names @('model')
-
-        if ($toolValue) {
-            $tool = [string]$toolValue
-        }
-
-        if ($modelValue) {
-            $model = [string]$modelValue
-        }
+        $normalizedPair = Resolve-ToolModelPair -AgentId $agentId -ToolValue (Get-ResponsePropertyValue -Object $agentId -Names @('tool')) -ModelValue (Get-ResponsePropertyValue -Object $agentId -Names @('model'))
     }
+
+    $tool = $normalizedPair.Tool
+    $model = $normalizedPair.Model
 
     $breakdownKey = if ([string]::IsNullOrWhiteSpace($model)) {
         $tool
@@ -1144,21 +1138,7 @@ function Get-CommitAiFileStats {
                 $fileAttestations[$currentFile]['human'] += $lineCount
             } else {
                 $fileAttestations[$currentFile]['ai'] += $lineCount
-
-                # Build tool_model_breakdown from prompt metadata
-                $tool = 'unknown'; $model = $null
-                if ($promptsMetadata.ContainsKey($entryId)) {
-                    $agentId = Get-ResponsePropertyValue -Object $promptsMetadata[$entryId] -Names @('agent_id', 'agentId')
-                    $toolVal  = Get-ResponsePropertyValue -Object $agentId -Names @('tool')
-                    $modelVal = Get-ResponsePropertyValue -Object $agentId -Names @('model')
-                    if ($toolVal) { $tool = [string]$toolVal }
-                    if ($modelVal) { $model = [string]$modelVal }
-                }
-                $bkKey = if ([string]::IsNullOrWhiteSpace($model)) { $tool } else { '{0}::{1}' -f $tool, $model }
-                if (-not $fileAttestations[$currentFile]['tool_model_breakdown'].ContainsKey($bkKey)) {
-                    $fileAttestations[$currentFile]['tool_model_breakdown'][$bkKey] = @{ ai_additions = 0 }
-                }
-                $fileAttestations[$currentFile]['tool_model_breakdown'][$bkKey]['ai_additions'] += $lineCount
+                Add-FileToolModelBreakdown -FileStats $fileAttestations[$currentFile] -PromptLookup $promptsMetadata -PromptId $entryId -LineCount $lineCount
             }
         }
     }
@@ -1223,17 +1203,259 @@ function Convert-ToolModelBreakdownToDto {
             $model = $nameParts[1]
         }
 
-        $dtoItem = [ordered]@{
-            tool = $tool
-            model = $model
+        $slashParts = Split-ToolModelIdentifier -Value $entryName
+        if ($slashParts -and $slashParts.Split) {
+            $tool = $slashParts.Tool
+            $model = $slashParts.Model
         }
+
+        $dtoItem = [ordered]@{}
 
         $convertedMetrics = Convert-ObjectKeysToCamelCase -Value $entry.Value
         foreach ($metricEntry in (Get-ObjectEntries -Object $convertedMetrics)) {
             $dtoItem[[string]$metricEntry.Name] = $metricEntry.Value
         }
 
+        $toolSeed = if ($dtoItem.Contains('tool')) { $dtoItem['tool'] } else { $tool }
+        $modelSeed = if ($dtoItem.Contains('model')) { $dtoItem['model'] } else { $model }
+        $normalizedPair = Resolve-ToolModelPair -AgentId $null -ToolValue $toolSeed -ModelValue $modelSeed
+        $dtoItem['tool'] = $normalizedPair.Tool
+        $dtoItem['model'] = $normalizedPair.Model
+
         $items += [pscustomobject]$dtoItem
+    }
+
+    return @($items)
+}
+
+function Get-TrimmedStringOrNull {
+    param([object]$Value)
+
+    if ($null -eq $Value) {
+        return $null
+    }
+
+    $trimmed = ([string]$Value).Trim()
+    if (-not $trimmed) {
+        return $null
+    }
+
+    return $trimmed
+}
+
+function Split-ToolModelIdentifier {
+    param([string]$Value)
+
+    $text = Get-TrimmedStringOrNull -Value $Value
+    if (-not $text) {
+        return $null
+    }
+
+    $separator = $null
+    if ($text.Contains('::')) {
+        $separator = '::'
+    } elseif ($text.Contains('/')) {
+        $separator = '/'
+    } else {
+        return [pscustomobject]@{
+            Tool = $text
+            Model = $null
+            Split = $false
+        }
+    }
+
+    $parts = $text -split [regex]::Escape($separator), 2
+    $tool = if ($parts.Count -ge 1) { Get-TrimmedStringOrNull -Value $parts[0] } else { $null }
+    $model = if ($parts.Count -ge 2) { Get-TrimmedStringOrNull -Value $parts[1] } else { $null }
+
+    if (-not $tool -or -not $model) {
+        return [pscustomobject]@{
+            Tool = $text
+            Model = $null
+            Split = $false
+        }
+    }
+
+    return [pscustomobject]@{
+        Tool = $tool
+        Model = $model
+        Split = $true
+    }
+}
+
+function Get-ToolFamilyKey {
+    param([string]$Value)
+
+    $text = Get-TrimmedStringOrNull -Value $Value
+    if (-not $text) {
+        return $null
+    }
+
+    $normalized = ($text.Trim().ToLowerInvariant() -replace '[\s_]+', '-')
+    switch ($normalized) {
+        'copilot' { return 'github-copilot' }
+        'github-copilot' { return 'github-copilot' }
+        default { return $normalized }
+    }
+}
+
+function Test-SameToolFamily {
+    param(
+        [string]$Left,
+        [string]$Right
+    )
+
+    $leftKey = Get-ToolFamilyKey -Value $Left
+    $rightKey = Get-ToolFamilyKey -Value $Right
+    return $leftKey -and $rightKey -and $leftKey -eq $rightKey
+}
+
+function Resolve-ToolModelPair {
+    param(
+        [object]$AgentId,
+        [object]$ToolValue,
+        [object]$ModelValue
+    )
+
+    $tool = Get-TrimmedStringOrNull -Value $ToolValue
+    $model = Get-TrimmedStringOrNull -Value $ModelValue
+
+    if (-not $tool -and -not $model) {
+        $agentText = Get-TrimmedStringOrNull -Value $AgentId
+        if ($agentText) {
+            $agentPair = Split-ToolModelIdentifier -Value $agentText
+            if ($agentPair) {
+                $tool = $agentPair.Tool
+                $model = $agentPair.Model
+            }
+        }
+    }
+
+    if ($tool) {
+        $toolPair = Split-ToolModelIdentifier -Value $tool
+        if ($toolPair -and $toolPair.Split -and -not $model) {
+            $tool = $toolPair.Tool
+            $model = $toolPair.Model
+        }
+    }
+
+    if ($model) {
+        $modelPair = Split-ToolModelIdentifier -Value $model
+        if ($modelPair -and $modelPair.Split) {
+            if (-not $tool -or $tool -ieq 'unknown') {
+                $tool = $modelPair.Tool
+                $model = $modelPair.Model
+            } elseif ($model -ieq ('{0}::{1}' -f $tool, $modelPair.Model) `
+                    -or $model -ieq ('{0}/{1}' -f $tool, $modelPair.Model) `
+                    -or (Test-SameToolFamily -Left $tool -Right $modelPair.Tool)) {
+                $model = $modelPair.Model
+            }
+        }
+    }
+
+    if (-not $tool) {
+        $tool = 'unknown'
+    }
+
+    return [pscustomobject]@{
+        Tool = $tool
+        Model = $model
+    }
+}
+
+function Get-IntValueOrZero {
+    param([object]$Value)
+
+    if ($null -eq $Value) {
+        return 0
+    }
+
+    try {
+        return [int]$Value
+    } catch {
+        return 0
+    }
+}
+
+function Get-PromptTextFromMessages {
+    param([object]$Messages)
+
+    $promptParts = @()
+    foreach ($message in (Convert-ToObjectArray -Value $Messages)) {
+        $messageType = Get-TrimmedStringOrNull -Value (Get-ResponsePropertyValue -Object $message -Names @('type'))
+        if ($messageType -ne 'user') {
+            continue
+        }
+
+        $messageText = Get-TrimmedStringOrNull -Value (Get-ResponsePropertyValue -Object $message -Names @('text'))
+        if ($messageText) {
+            $promptParts += $messageText
+        }
+    }
+
+    if ($promptParts.Count -eq 0) {
+        return $null
+    }
+
+    return ($promptParts -join "`n`n")
+}
+
+function Get-CommitPromptUploadItems {
+    param([string]$CommitSha)
+
+    $repoRoot = Get-RepoRoot
+    $noteResult = Invoke-ProcessCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'notes', '--ref=ai', 'show', $CommitSha)
+    if ($noteResult.ExitCode -ne 0 -or -not $noteResult.StdOut) {
+        return @()
+    }
+
+    $noteText = $noteResult.StdOut
+    $sepMatch = [regex]::Match($noteText, '(?m)^---\s*$')
+    if (-not $sepMatch.Success) {
+        return @()
+    }
+
+    $jsonText = $noteText.Substring($sepMatch.Index + $sepMatch.Length).Trim()
+    if (-not $jsonText) {
+        return @()
+    }
+
+    try {
+        $metadata = $jsonText | ConvertFrom-Json
+    } catch {
+        return @()
+    }
+
+    $prompts = Get-ResponsePropertyValue -Object $metadata -Names @('prompts')
+    if (-not $prompts) {
+        return @()
+    }
+
+    $items = @()
+    foreach ($entry in (Get-ObjectEntries -Object $prompts)) {
+        $prompt = $entry.Value
+        if ($null -eq $prompt) {
+            continue
+        }
+
+        $agentId = Get-ResponsePropertyValue -Object $prompt -Names @('agent_id', 'agentId')
+        $normalizedPair = Resolve-ToolModelPair -AgentId $agentId -ToolValue (Get-ResponsePropertyValue -Object $agentId -Names @('tool')) -ModelValue (Get-ResponsePropertyValue -Object $agentId -Names @('model'))
+
+        $messages = @((Convert-ToObjectArray -Value (Get-ResponsePropertyValue -Object $prompt -Names @('messages'))))
+        $items += [pscustomobject]@{
+            promptHash = [string]$entry.Name
+            tool = $normalizedPair.Tool
+            model = $normalizedPair.Model
+            humanAuthor = Get-TrimmedStringOrNull -Value (Get-ResponsePropertyValue -Object $prompt -Names @('human_author', 'humanAuthor'))
+            promptText = Get-PromptTextFromMessages -Messages $messages
+            messages = $messages
+            messagesUrl = Get-TrimmedStringOrNull -Value (Get-ResponsePropertyValue -Object $prompt -Names @('messages_url', 'messagesUrl'))
+            totalAdditions = Get-IntValueOrZero -Value (Get-ResponsePropertyValue -Object $prompt -Names @('total_additions', 'totalAdditions'))
+            totalDeletions = Get-IntValueOrZero -Value (Get-ResponsePropertyValue -Object $prompt -Names @('total_deletions', 'totalDeletions'))
+            acceptedLines = Get-IntValueOrZero -Value (Get-ResponsePropertyValue -Object $prompt -Names @('accepted_lines', 'acceptedLines'))
+            overridenLines = Get-IntValueOrZero -Value (Get-ResponsePropertyValue -Object $prompt -Names @('overriden_lines', 'overridenLines'))
+            customAttributes = Get-ResponsePropertyValue -Object $prompt -Names @('custom_attributes', 'customAttributes')
+        }
     }
 
     return @($items)
@@ -1331,6 +1553,7 @@ function New-CommitUploadItem {
         timestamp = $formattedTimestamp
         hasAuthorshipNote = [bool]$StatsResult.HasAuthorshipNote
         stats = (Convert-ObjectKeysToCamelCase -Value $StatsResult.Stats)
+        prompts = @($StatsResult.Prompts)
     }
 }
 

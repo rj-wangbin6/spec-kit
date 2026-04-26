@@ -670,7 +670,11 @@ await mcp_upload-doc_create_code_review_issue({
 在步骤 8.5 收集到有效数据的前提下：
 
 1. **调用上传脚本**
-   - 执行: `.specify/scripts/powershell/upload-ai-stats.ps1 -Commits "<逗号分隔的SHA>"`
+  - 优先根据当前项目实际存在的脚本类型选择命令，不要硬编码单一脚本路径
+  - 如果存在 `.specify/scripts/bash/upload-ai-stats.sh`，执行: `bash .specify/scripts/bash/upload-ai-stats.sh --commits "<逗号分隔的SHA>"`
+  - 如果存在 `.specify/scripts/powershell/upload-ai-stats.ps1`，执行: `.specify/scripts/powershell/upload-ai-stats.ps1 -Commits "<逗号分隔的SHA>"`
+  - 如果两种脚本同时存在，优先使用与项目初始化 `--script` 类型一致的那个；如果无法判断，就使用当前 shell 可直接执行的那个
+  - 如果两种脚本都不存在，记录警告并跳到步骤 9，不影响审查流程
   - 如果未显式配置 URL，脚本默认调用 `https://service-gw.ruijie.com.cn/api/ai-cr-manage-service/api/public/upload/ai-stats`
   - 如需覆盖，脚本会优先读取 `GIT_AI_REPORT_REMOTE_URL`
   - 也可通过 `GIT_AI_REPORT_REMOTE_ENDPOINT` + `GIT_AI_REPORT_REMOTE_PATH` 覆盖，默认值分别为 `https://service-gw.ruijie.com.cn` 和 `/api/ai-cr-manage-service/api/public/upload/ai-stats`
@@ -680,26 +684,26 @@ await mcp_upload-doc_create_code_review_issue({
   - 可通过 `GIT_AI_VSCODE_MCP_CONFIG_PATH` / `GIT_AI_IDEA_MCP_CONFIG_PATH` 覆盖默认配置文件探测路径
   - 脚本会将这些 commit 组装为一次批量请求，并按 `results[]` 逐条解析返回状态
 
-2. **在审查报告末尾追加 AI 代码使用统计表格**
+% 2. **在审查报告末尾追加 AI 代码使用统计表格**
 
-```markdown
-## AI 代码使用统计
+% ```markdown
+% ## AI 代码使用统计
 
-| Commit | 作者 | 总新增行 | AI归因新增 | 已知人工 | 未知/未归因 | AI 占比 | Note | 主要工具 |
-|--------|------|---------|-----------|---------|------------|---------|------|---------|
-| abc123d | 张三 | 200 | 80 | 105 | 15 | 40% | 有 | copilot / gpt-4o |
-| def456a | 张三 | 150 | 0 | 90 | 60 | 0% | 无 | — |
-| **合计** | — | **350** | **80** | **195** | **75** | **23%** | — | — |
+% | Commit | 作者 | 总新增行 | AI归因新增 | 已知人工 | 未知/未归因 | AI 占比 | Note | 主要工具 |
+% |--------|------|---------|-----------|---------|------------|---------|------|---------|
+% | abc123d | 张三 | 200 | 80 | 105 | 15 | 40% | 有 | copilot / gpt-4o |
+% | def456a | 张三 | 150 | 0 | 90 | 60 | 0% | 无 | — |
+% | **合计** | — | **350** | **80** | **195** | **75** | **23%** | — | — |
 
-> **数据来源：** git-ai authorship note (`refs/notes/ai`)
-> **AI 占比** = `stats.aiAdditions / stats.gitDiffAddedLines`
-> **当前默认展示口径** = `stats.aiAdditions`、`stats.humanAdditions`、`stats.unknownAdditions`
-> **mixedAdditions** = 仍保留在原始 `stats` 中，但当前预览和报告摘要不单独展示
-> **主要工具** = `stats.toolModelBreakdown` 中 `aiAdditions` 最大的项，展示为 `tool / model`
-> **逐文件明细** = 如需 drill-down，可读取 `stats.files[]`，其中包含 `filePath`、`gitDiffAddedLines`、`gitDiffDeletedLines`、`aiAdditions`、`humanAdditions`、`unknownAdditions` 与文件级 `toolModelBreakdown`
-```
+% > **数据来源：** git-ai authorship note (`refs/notes/ai`)
+% > **AI 占比** = `stats.aiAdditions / stats.gitDiffAddedLines`
+% > **当前默认展示口径** = `stats.aiAdditions`、`stats.humanAdditions`、`stats.unknownAdditions`
+% > **mixedAdditions** = 仍保留在原始 `stats` 中，但当前预览和报告摘要不单独展示
+% > **主要工具** = `stats.toolModelBreakdown` 中 `aiAdditions` 最大的项，展示为 `tool / model`
+% > **逐文件明细** = 如需 drill-down，可读取 `stats.files[]`，其中包含 `filePath`、`gitDiffAddedLines`、`gitDiffDeletedLines`、`aiAdditions`、`humanAdditions`、`unknownAdditions` 与文件级 `toolModelBreakdown`
+% ```
 
-3. **如果批量上传失败、部分 commit 失败或未配置 endpoint**，记录警告但不影响审查报告的其他内容
+2. **如果批量上传失败、部分 commit 失败或未配置 endpoint**，记录警告但不影响审查报告的其他内容
 
 > ⚠️ 重要：步骤 8.5/8.6 的任何失败都不应该阻止审查报告的生成。
 > git-ai 数据是"锦上添花"，不是"刚需"。

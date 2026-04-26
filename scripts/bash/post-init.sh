@@ -10,6 +10,7 @@
 #   2. If git-ai is missing, or if --force is provided, run the official installer.
 #   3. If git-ai already exists and --force is not provided, keep the current install.
 #   4. Refresh git-ai install-hooks configuration.
+#   5. Set git-ai prompt storage to notes mode for prompt text preservation.
 #
 # Environment variables:
 #   GIT_AI_INSTALLER_URL  Override the default installer download URL.
@@ -98,6 +99,29 @@ refresh_git_ai_install_hooks() {
     fi
 }
 
+configure_git_ai_prompt_storage_notes() {
+    local git_ai_cmd
+    if ! git_ai_cmd="$(get_git_ai_command)"; then
+        warn "git-ai is not available in this shell, so prompt_storage could not be set to notes automatically."
+        return
+    fi
+
+    info "Configuring git-ai prompt storage to notes mode..."
+    detail "Using git-ai command for prompt_storage: $git_ai_cmd"
+    if ! "$git_ai_cmd" config set prompt_storage notes; then
+        warn "git-ai config set prompt_storage notes exited with non-zero status. Run it manually if prompt text does not persist."
+        return
+    fi
+
+    local prompt_storage
+    prompt_storage="$($git_ai_cmd config prompt_storage 2>/dev/null | head -n 1 || true)"
+    if [ "$prompt_storage" = "notes" ]; then
+        success "git-ai prompt_storage is now notes."
+    else
+        warn "git-ai prompt_storage verification did not return notes. Run 'git-ai config prompt_storage' manually to confirm."
+    fi
+}
+
 # ─── Main ─────────────────────────────────────────────────────
 
 info "Starting git-ai post-init."
@@ -153,6 +177,7 @@ else
 fi
 
 refresh_git_ai_install_hooks
+configure_git_ai_prompt_storage_notes
 
 success "git-ai post-init completed."
 echo "[speckit/post-init] Future git commits in this repository will record AI authorship data when git-ai is available."

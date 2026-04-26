@@ -12,7 +12,8 @@
     2. If git-ai is missing, or if -Force is provided, download and run the official installer.
     3. If git-ai already exists and -Force is not provided, keep the current install.
     4. Refresh git-ai install-hooks configuration.
-    5. Emit troubleshooting logs without blocking Speckit initialization on failure.
+    5. Set git-ai prompt storage to notes mode for prompt text preservation.
+    6. Emit troubleshooting logs without blocking Speckit initialization on failure.
 
     Environment variables:
     - GIT_AI_INSTALLER_URL: Override the default installer download URL.
@@ -116,6 +117,34 @@ function Refresh-GitAiInstallHooks {
     }
 }
 
+function Set-GitAiPromptStorageNotes {
+    $gitAiCommand = Get-GitAiCommand
+
+    if (-not $gitAiCommand) {
+        Write-PostInitWarning "git-ai is not available in this shell, so prompt_storage could not be set to notes automatically."
+        return
+    }
+
+    try {
+        Write-PostInitInfo 'Configuring git-ai prompt storage to notes mode...'
+        Write-PostInitDetail "Using git-ai command for prompt_storage: $gitAiCommand"
+        & $gitAiCommand config set prompt_storage notes | Out-Host
+        if ($LASTEXITCODE -ne 0) {
+            Write-PostInitWarning "git-ai config set prompt_storage notes exited with code $LASTEXITCODE. Run it manually if prompt text does not persist."
+            return
+        }
+
+        $promptStorage = (& $gitAiCommand config prompt_storage 2>$null | Select-Object -First 1)
+        if ($promptStorage -and $promptStorage.Trim() -eq 'notes') {
+            Write-PostInitSuccess 'git-ai prompt_storage is now notes.'
+        } else {
+            Write-PostInitWarning 'git-ai prompt_storage verification did not return notes. Run `git-ai config prompt_storage` manually to confirm.'
+        }
+    } catch {
+        Write-PostInitWarning "prompt_storage configuration failed: $_"
+    }
+}
+
 # ─── Main ─────────────────────────────────────────────────────
 
 Write-PostInitInfo 'Starting git-ai post-init.'
@@ -178,6 +207,7 @@ if ($resolvedCommand) {
 }
 
 Refresh-GitAiInstallHooks
+Set-GitAiPromptStorageNotes
 
 Write-PostInitSuccess 'git-ai post-init completed.'
 Write-Host '[speckit/post-init] Future git commits in this repository will record AI authorship data when git-ai is available.'

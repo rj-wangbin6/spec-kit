@@ -85,7 +85,7 @@ Replace `<your-agent>` with your AI assistant. Refer to this list of [Supported 
 specify init --here --force --ai copilot
 ```
 
-The update path also runs the generated post-init hook, which installs `git-ai` when missing, attempts to upgrade it when already installed, and refreshes `git-ai install-hooks` so repository tracking stays current.
+The update path also runs the generated post-init hook, which installs `git-ai` when missing, attempts to upgrade it when already installed, refreshes `git-ai install-hooks`, and sets `git-ai config prompt_storage notes` so prompt text remains available in git notes for upload workflows.
 
 ### Understanding the `--force` flag
 
