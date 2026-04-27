@@ -1,0 +1,17 @@
+.github/workflows/scripts/create-release-packages.ps1
+  h_602db118073c06 70-72
+.github/workflows/scripts/create-release-packages.sh
+  h_602db118073c06 53-55
+---
+{
+  "schema_version": "authorship/3.1.0",
+  "git_ai_version": "2.0.4",
+  "x_user_id": "108",
+  "base_commit_sha": "5f5a97e6ea24fcfe5cf8af5c07bb25ccdba73de0",
+  "prompts": {},
+  "humans": {
+    "h_602db118073c06": {
+      "author": "gaoang"
+    }
+  }
+}
