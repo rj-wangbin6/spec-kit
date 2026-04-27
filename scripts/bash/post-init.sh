@@ -2,21 +2,24 @@
 # Post-init hook for Speckit: automatically installs and configures git-ai.
 #
 # This script is called by `specify init` after project scaffolding completes.
-# It ensures git-ai is installed via the official installer flow and hooks are
+# It ensures git-ai is installed via the configured GitHub release source and hooks are
 # configured so that every commit automatically records AI authorship data.
 #
 # Behavior:
 #   1. Detect whether git-ai is already installed.
-#   2. If git-ai is missing, or if --force is provided, run the official installer.
+#   2. If git-ai is missing, or if --force is provided, run the configured installer.
 #   3. If git-ai already exists and --force is not provided, keep the current install.
 #   4. Refresh git-ai install-hooks configuration.
 #
 # Environment variables:
 #   GIT_AI_INSTALLER_URL  Override the default installer download URL.
+#   GIT_AI_GITHUB_REPO   Override the default GitHub repository used by the installer.
+#   GIT_AI_RELEASE_TAG   Override the release tag used by the installer.
+#   GIT_AI_LOCAL_BINARY  Use a prebuilt local git-ai binary instead of downloading one.
 #
 # Usage:
 #   .specify/scripts/bash/post-init.sh
-#   .specify/scripts/bash/post-init.sh --force   # Force git-ai reinstall via the remote installer
+#   .specify/scripts/bash/post-init.sh --force   # Force git-ai reinstall via the configured release source
 #   .specify/scripts/bash/post-init.sh --skip     # Skip git-ai setup entirely
 
 set -euo pipefail
@@ -25,7 +28,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=common.sh
 . "$SCRIPT_DIR/common.sh"
 
-GIT_AI_INSTALL_SCRIPT_URL="${GIT_AI_INSTALLER_URL:-https://usegitai.com/install.sh}"
+GIT_AI_DEFAULT_GITHUB_REPO="rj-gaoang/git-ai"
+GIT_AI_DEFAULT_RELEASE_TAG="latest"
+GIT_AI_INSTALL_SCRIPT_URL="${GIT_AI_INSTALLER_URL:-https://github.com/${GIT_AI_DEFAULT_GITHUB_REPO}/releases/latest/download/install.sh}"
+export GIT_AI_GITHUB_REPO="${GIT_AI_GITHUB_REPO:-$GIT_AI_DEFAULT_GITHUB_REPO}"
+export GIT_AI_RELEASE_TAG="${GIT_AI_RELEASE_TAG:-$GIT_AI_DEFAULT_RELEASE_TAG}"
 GIT_AI_EXECUTABLE_PATH="$HOME/.git-ai/bin/git-ai"
 
 FORCE=false
@@ -61,6 +68,11 @@ invoke_git_ai_installer() {
 
     info "Downloading git-ai installer from the configured source..."
     detail "Installer URL: $GIT_AI_INSTALL_SCRIPT_URL"
+    detail "GitHub repo: $GIT_AI_GITHUB_REPO"
+    detail "Release tag: $GIT_AI_RELEASE_TAG"
+    if [ -n "${GIT_AI_LOCAL_BINARY:-}" ]; then
+        detail "Local binary override: $GIT_AI_LOCAL_BINARY"
+    fi
     detail "Temporary installer path: $tmp_installer"
     if command -v curl &>/dev/null; then
         curl -fsSL "$GIT_AI_INSTALL_SCRIPT_URL" -o "$tmp_installer"
@@ -104,6 +116,8 @@ info "Starting git-ai post-init."
 detail "Working directory: $(pwd)"
 detail "Force=$FORCE; Skip=$SKIP"
 detail "Configured installer URL: $GIT_AI_INSTALL_SCRIPT_URL"
+detail "Configured GitHub repo: $GIT_AI_GITHUB_REPO"
+detail "Configured release tag: $GIT_AI_RELEASE_TAG"
 
 if [ "$SKIP" = true ]; then
     info "Skipping git-ai setup because --skip was provided."
@@ -121,7 +135,7 @@ if git_ai_cmd="$(get_git_ai_command)"; then
     fi
 
     if [ "$FORCE" = true ]; then
-        info "Force requested. Re-running the official git-ai installer."
+        info "Force requested. Re-running the configured git-ai installer."
         if ! invoke_git_ai_installer; then
             warn "git-ai installation failed."
             warn "You can rerun this script later without blocking Spec Kit initialization."
@@ -131,7 +145,7 @@ if git_ai_cmd="$(get_git_ai_command)"; then
         info "git-ai already installed. Skipping remote installer because --force was not provided."
     fi
 else
-    info "git-ai not detected. Running the official installer."
+    info "git-ai not detected. Running the configured installer."
     if ! invoke_git_ai_installer; then
         warn "git-ai installation failed."
         warn "You can rerun this script later without blocking Spec Kit initialization."

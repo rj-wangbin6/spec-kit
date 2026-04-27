@@ -1562,7 +1562,11 @@ def _get_post_init_skip_reason(project_path: Path, script_type: str) -> str:
     return "launcher not found"
 
 
-def _get_post_init_command(project_path: Path, script_type: str) -> list[str] | None:
+def _get_post_init_command(
+    project_path: Path,
+    script_type: str,
+    force_update: bool = False,
+) -> list[str] | None:
     """Resolve the post-init script path and return the command to execute it.
 
     Returns None if the script does not exist.
@@ -1576,19 +1580,26 @@ def _get_post_init_command(project_path: Path, script_type: str) -> list[str] | 
     shell_cmd = _resolve_post_init_shell(script_type)
     if not shell_cmd:
         return None
-    return [*shell_cmd, str(script_path)]
+    cmd = [*shell_cmd, str(script_path)]
+    if force_update:
+        if script_type == "ps":
+            cmd.append("-Force")
+        elif script_type == "sh":
+            cmd.append("--force")
+    return cmd
 
 
 def run_post_init_script(
     project_path: Path,
     script_type: str,
+    force_update: bool = False,
     tracker: "StepTracker | None" = None,
 ) -> None:
     """Execute the post-init script (e.g. git-ai installation).
 
     Failures are logged as warnings and never abort ``specify init``.
     """
-    cmd = _get_post_init_command(project_path, script_type)
+    cmd = _get_post_init_command(project_path, script_type, force_update=force_update)
     if not cmd:
         reason = _get_post_init_skip_reason(project_path, script_type)
         if tracker:
@@ -1599,8 +1610,9 @@ def run_post_init_script(
     launcher_name = Path(cmd[0]).name
     if tracker:
         tracker.start("post-init", launcher_name)
+    force_note = " with force-update" if force_update else ""
     console.print(
-        f"[cyan]Running post-init hook:[/cyan] {SCRIPT_TYPE_POST_INIT.get(script_type, 'post-init')} via {launcher_name}"
+        f"[cyan]Running post-init hook:[/cyan] {SCRIPT_TYPE_POST_INIT.get(script_type, 'post-init')} via {launcher_name}{force_note}"
     )
 
     try:
@@ -2374,8 +2386,8 @@ def init(
             if not use_github:
                 tracker.skip("cleanup", "not needed (no download)")
 
-            # Run post-init hooks (e.g. git-ai installation)
-            run_post_init_script(project_path, selected_script, tracker=tracker)
+            # Run post-init hooks (e.g. git-ai installation/update)
+            run_post_init_script(project_path, selected_script, force_update=True, tracker=tracker)
 
             tracker.complete("final", "project ready")
         except (typer.Exit, SystemExit):
