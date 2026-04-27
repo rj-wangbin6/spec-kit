@@ -18,6 +18,7 @@
     - GIT_AI_REPORT_REMOTE_PATH:     Optional. Request path override when using ENDPOINT.
     - GIT_AI_REPORT_REMOTE_API_KEY:  Optional. Bearer token for authentication.
     - GIT_AI_REPORT_REMOTE_USER_ID:  Optional. Explicit X-USER-ID value for upload requests.
+    - GIT_AI_UPLOAD_EXCLUDE_PATH_PREFIXES: Optional. Comma/semicolon-separated path prefixes to omit from stats.files[]; defaults to target/.
     - GIT_AI_REPORT_LOG_REQUEST:     Optional. When set to 1/true/yes/on, print request URL, headers, and body before upload.
     - GIT_AI_VSCODE_MCP_CONFIG_PATH: Optional. Override path to the VS Code MCP config file.
     - GIT_AI_IDEA_MCP_CONFIG_PATH:   Optional. Override path to the IDEA MCP JSON config file.
@@ -65,6 +66,7 @@ if (-not $script:LogHttpPayload -and -not [string]::IsNullOrWhiteSpace($env:GIT_
 $script:DefaultRemoteEndpoint = 'https://service-gw.ruijie.com.cn'
 $script:DefaultRemotePath = '/api/ai-cr-manage-service/api/public/upload/ai-stats'
 $script:DefaultRemoteUrl = '{0}{1}' -f $script:DefaultRemoteEndpoint, $script:DefaultRemotePath
+$script:DefaultUploadExcludePathPrefixes = @('target/')
 
 if ($Help) {
     Get-Help $MyInvocation.MyCommand.Path -Detailed
@@ -865,7 +867,7 @@ function Write-UploadDiagnostic {
         return
     }
 
-    Write-Host $Message -ForegroundColor DarkGray
+    Write-Host $Message -ForegroundColor Yellow
 }
 
 function Format-UploadHeadersForLog {
@@ -914,6 +916,69 @@ function Write-UploadRequestLog {
     Write-UploadDiagnostic $headersJson
     Write-UploadDiagnostic '[upload-ai-stats] HTTP request body:'
     Write-UploadDiagnostic $Body
+}
+
+function Write-UploadResponseLog {
+    param([object]$Response)
+
+    if (-not $script:LogHttpPayload) {
+        return
+    }
+
+    $responseJson = $null
+    try {
+        $responseJson = ConvertTo-Json -InputObject $Response -Depth 12
+    } catch {
+        $responseJson = [string]$Response
+    }
+
+    Write-UploadDiagnostic '[upload-ai-stats] HTTP response body:'
+    Write-UploadDiagnostic $responseJson
+}
+
+function Get-ConfiguredUploadExcludePathPrefixes {
+    $configuredPrefixes = @()
+    if (-not [string]::IsNullOrWhiteSpace($env:GIT_AI_UPLOAD_EXCLUDE_PATH_PREFIXES)) {
+        $configuredPrefixes = @($env:GIT_AI_UPLOAD_EXCLUDE_PATH_PREFIXES -split '[;,]' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    }
+
+    if ($configuredPrefixes.Count -eq 0) {
+        $configuredPrefixes = @($script:DefaultUploadExcludePathPrefixes)
+    }
+
+    return @($configuredPrefixes | ForEach-Object {
+        $normalizedPrefix = $_.Trim().Trim('"').Replace('\', '/').TrimStart('/')
+        if (-not $normalizedPrefix) {
+            return $null
+        }
+
+        if (-not $normalizedPrefix.EndsWith('/')) {
+            $normalizedPrefix = "$normalizedPrefix/"
+        }
+
+        return $normalizedPrefix
+    } | Where-Object { $_ } | Select-Object -Unique)
+}
+
+function Test-ShouldExcludeUploadFilePath {
+    param([AllowEmptyString()][string]$FilePath)
+
+    if ([string]::IsNullOrWhiteSpace($FilePath)) {
+        return $false
+    }
+
+    $normalizedFilePath = $FilePath.Trim().Trim('"').Replace('\', '/').TrimStart('/')
+    if (-not $normalizedFilePath) {
+        return $false
+    }
+
+    foreach ($excludedPrefix in (Get-ConfiguredUploadExcludePathPrefixes)) {
+        if ($normalizedFilePath.StartsWith($excludedPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+            return $true
+        }
+    }
+
+    return $false
 }
 
 function Convert-ToObjectArray {
@@ -1061,14 +1126,24 @@ function Get-CommitAiFileStats {
     }
 
     $fileLineCounts = [ordered]@{}
+    $excludedFileCount = 0
     foreach ($numLine in ($numstatResult.StdOut -split "`n")) {
         $numLine = $numLine.Trim()
         if (-not $numLine) { continue }
         $parts = $numLine -split "`t", 3
         if ($parts.Count -lt 3) { continue }
+        $filePath = [string]$parts[2]
+        if (Test-ShouldExcludeUploadFilePath -FilePath $filePath) {
+            $excludedFileCount++
+            continue
+        }
         $added   = if ($parts[0] -eq '-') { 0 } else { [int]$parts[0] }
         $deleted = if ($parts[1] -eq '-') { 0 } else { [int]$parts[1] }
-        $fileLineCounts[$parts[2]] = @{ added = $added; deleted = $deleted }
+        $fileLineCounts[$filePath] = @{ added = $added; deleted = $deleted }
+    }
+
+    if ($excludedFileCount -gt 0) {
+        Write-UploadTrace "[upload-ai-stats] $shortSha : excluded $excludedFileCount build artifact file(s) from stats.files[]"
     }
 
     if ($fileLineCounts.Count -eq 0) {
@@ -1458,8 +1533,15 @@ function Send-AiStatsBatchToRemote {
 
         Write-UploadTrace "[upload-ai-stats] Uploading $($CommitItems.Count) commit(s) to $($RemoteConfig.Url)$userIdTrace"
         Write-UploadRequestLog -Uri $RemoteConfig.Url -Headers $headers -Body $payload
+        if ($script:LogHttpPayload) {
+            Write-UploadDiagnostic '[upload-ai-stats] Calling remote upload endpoint...'
+        }
         $response = Invoke-RestMethod -Uri $RemoteConfig.Url `
             -Method POST -Body $payload -Headers $headers -TimeoutSec 10
+        if ($script:LogHttpPayload) {
+            Write-UploadDiagnostic '[upload-ai-stats] Remote upload endpoint returned a response.'
+        }
+        Write-UploadResponseLog -Response $response
 
         return @{
             Succeeded = $true
@@ -1573,6 +1655,9 @@ foreach ($sha in $targetCommitShas) {
 }
 
 if (-not $DryRun -and $preparedCommitItems.Count -gt 0) {
+    if ($script:LogHttpPayload) {
+        Write-UploadDiagnostic "[upload-ai-stats] Prepared $($preparedCommitItems.Count) commit(s) for remote upload."
+    }
     $batchUploadResult = Send-AiStatsBatchToRemote -CommitItems $preparedCommitItems -ProjectName $projectName -RemoteConfig $remoteConfig -Source $Source -ReviewDocumentId $ReviewDocumentId
 
     foreach ($uploadResult in $batchUploadResult.Results) {
