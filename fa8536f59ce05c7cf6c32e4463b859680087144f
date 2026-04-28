@@ -1,0 +1,44 @@
+scripts/bash/post-init.sh
+  05e772d3a26c9177 2,5-6,8-12,19,79-87,112,115,117-126,134,136-139,141,143-144
+test-verify/.specify/scripts/powershell/post-init.ps1
+  05e772d3a26c9177 2,4,7-8,12-15,22,87-113,143,146,148-159,169,171-175,177,179-180
+scripts/powershell/post-init.ps1
+  05e772d3a26c9177 2,4,7-8,12-15,22,87-113,143,146,148-159,169,171-175,177,179-180
+.specify/scripts/powershell/post-init.ps1
+  05e772d3a26c9177 2,4,7-8,12-15,22,87-113,143,146,148-159,169,171-175,177,179-180
+templates/code-review/template.md
+  05e772d3a26c9177 194
+.specify/scripts/powershell/upload-ai-stats.ps1
+  05e772d3a26c9177 7,12-13,35-36,43,78-163,168,170-173,177-190,193,209,219,221-648,651,656-660,662-768,773-780,786-792,794-808,822-826,830-831,846,857,862-864,869-870,875,877,879-885,887-902,904,908-909,912-925,929,931-932,934,938
+scripts/powershell/upload-ai-stats.ps1
+  05e772d3a26c9177 7,12-13,35-36,43,78-163,168,170-173,177-190,193,209,219,221-648,651,656-660,662-768,773-780,786-792,794-808,822-826,830-831,846,857,862-864,869-870,875,877,879-885,887-902,904,908-909,912-925,929,931-932,934,938
+README.md
+  05e772d3a26c9177 378-381,592-594
+templates/commands/code-review.md
+  05e772d3a26c9177 660,662,677,686,690-693,696
+test-verify/.specify/scripts/powershell/upload-ai-stats.ps1
+  05e772d3a26c9177 7,12-13,35-36,43,78-163,168,170-173,177-190,193,209,219,221-648,651,656-660,662-768,773-780,786-792,794-808,822-826,830-831,846,857,862-864,869-870,875,877,879-885,887-902,904,908-909,912-925,929,931-932,934,938
+docs/upgrade.md
+  05e772d3a26c9177 12,59,88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.20",
+  "base_commit_sha": "fa8536f59ce05c7cf6c32e4463b859680087144f",
+  "prompts": {
+    "05e772d3a26c9177": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "710ba49b-1e8e-4935-8816-754b20de4201",
+        "model": "copilot/gpt|copilot/claude"
+      },
+      "human_author": "gaoang <gaoang@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 2856,
+      "total_deletions": 471,
+      "accepted_lines": 2665,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/6cb7124d1971070928ba9ec331f2c78590f8c7e8405d82b3558ae8da9af219cc"
+    }
+  }
+}
