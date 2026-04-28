@@ -647,6 +647,12 @@ await mcp_upload-doc_create_code_review_issue({
 📁 本地报告：docs/review-results/code-review-YYYY-MM-DD-{author_name}.md
 ```
 
+
+### 步骤 9: 回填审查报告ID
+评审完成后，若当前存在评审记录documentId，且当前存在openReviewRecord工具，请主动调用下openReviewRecord工具，打开鉴渊AI代码评审面板，并定位评审文档，传递当前代码评审记录ID：{documentId}
+
+
+
 ---
 
 ## 子代理调用规范

@@ -264,8 +264,160 @@ src/
 - [ ] 注释是否充分
 - [ ] 测试覆盖率
 
----
+前端CR审查检查表
+1. 命名语义化，无硬编码、无测试残留代码
+   要求：变量/函数/文件语义清晰；禁止硬编码IP、接口、文案；删除console.log、debugger、测试注释、临时代码
+   正确示例：
+   // 语义化命名
+   const tableData = [];
+   const getUserInfo = () => {};
+   // 常量统一管理
+   const IFRAME_BASE_URL = "http://192.168.1.xx";
+   错误示例：
+   // 无意义命名
+   const a = [];
+   const fn1 = () => {};
+   // 硬编码
+   let url = "http://192.168.1.100:8080/home";
+   // 测试残留
+   debugger
+   console.log("测试接口返回");
+   // 注释残留测试代码
+   // function testDemo(){}
+------------------------------------------------------------------------------------------------
+2. 组件拆分合理，单文件不臃肿
+   要求：单一职责原则；弹窗、表格、表单、独立模块抽子组件；单Vue文件代码建议≤500行
+   正确示例：
+   components/
+   ├─ IframeEmbed/       // iframe内嵌单独组件
+   ├─ SearchForm/        // 搜索栏抽离
+   └─ TableList/         // 表格模块抽离
+   错误示例：
+- 一个页面内同时写：搜索+表单+弹窗+iframe+大量业务逻辑
+- 复制粘贴重复代码，不抽公共组件/工具方法
+------------------------------------------------------------------------------------------------
+3. Props / 异步 / 接口 有校验、异常捕获
+   要求：Props必做类型、默认值、校验；所有异步、接口请求必须try/catch；禁止裸写Promise无捕获
+   正确示例：
+<script setup>
+const props = defineProps({
+  iframeUrl: {
+    type: String,
+    required: true,
+    default: ""
+  }
+})
 
-**版本**: 1.0  
-**更新日期**: 2026-01-08  
-**维护者**: 皮皮芳
+// 接口统一捕获异常
+const loadData = async () => {
+  try {
+    loading.value = true;
+    const res = await api.getDetail();
+  } catch (error) {
+    ElMessage.error("数据加载失败");
+  } finally {
+    loading.value = false;
+  }
+};
+</script>
+错误示例：
+// props无校验、无默认值
+const props = defineProps(["iframeUrl"])
+
+// 接口无异常捕获
+const loadData = async () => {
+const res = await api.getDetail()
+}
+------------------------------------------------------------------------------------------------
+4. 样式 scoped，无全局污染
+   要求：业务页面/组件样式必须加 scoped；禁止滥用!important、全局通配符、穿透污染全局
+   正确示例：
+<style scoped>
+.iframe-wrap {
+  width: 100%;
+  height: 600px;
+}
+/* 深度修改第三方组件使用:deep() */
+:deep(.el-card) {
+  border-radius: 4px;
+}
+</style>
+错误示例：
+<style>
+/* 无scoped，全局污染 */
+.iframe-wrap{ }
+* { margin:0; }
+.el-input { width:100% !important; }
+<style>
+------------------------------------------------------------------------------------------------
+5. 列表 key、渲染规则合规
+要求：v-for 绑定唯一key；禁止用index作为高频更新列表key；合理区分v-if/v-show
+正确示例：
+<div v-for="item in tableList" :key="item.id">
+  {{ item.name }}
+</div>
+
+<!-- 少量渲染用v-if，频繁切换用v-show -->
+<iframe v-show="showIframe" :src="iframeUrl"></iframe>
+错误示例：
+<!-- 无key / 滥用index key -->
+<div v-for="item in list">{{ item.title }}</div>
+<div v-for="(item,index) in list" :key="index"></div>
+
+<!-- v-if 和 v-for 混用且v-if在前 -->
+<div v-if="show" v-for="item in list"></div>
+------------------------------------------------------------------------------------------------
+6. 定时器 / 事件 / iframe 监听 销毁处理
+要求：组件卸载时，清除定时器、监听事件、iframe消息监听，杜绝内存泄漏
+正确示例：
+let timer = null;
+const messageFn = (e) => {}
+
+onMounted(() => {
+  timer = setInterval(() => {}, 3000);
+  window.addEventListener("message", messageFn);
+})
+
+// 强制销毁
+onUnmounted(() => {
+  clearInterval(timer);
+  window.removeEventListener("message", messageFn);
+})
+错误示例：
+- 开启定时器、addEventListener、iframe监听，页面销毁不清除
+- 多页面复用同一全局定时器，造成重复执行
+------------------------------------------------------------------------------------------------
+7. 跨域、iframe、第三方嵌入 做安全限制
+要求：iframe跨域通信必须校验origin白名单；禁止无限制内嵌陌生内网/外网IP；限制嵌入权限
+正确示例：
+// 跨域message严格白名单校验
+const safeOriginList = ["http://192.168.1.100:8080"]
+window.addEventListener("message", (e) => {
+  if (!safeOriginList.includes(e.origin)) return;
+  // 业务逻辑
+})
+错误示例：
+// 不做源校验，全量接收所有跨域消息，存在安全风险
+window.addEventListener("message", (e) => {
+  handleData(e.data)
+})
+
+<!-- 直接裸嵌未知IP，无任何安全限制 -->
+<iframe src="http://陌生IP/xxx"></iframe>
+------------------------------------------------------------------------------------------------
+8. 空数据、报错、加载状态 完整兜底
+要求：接口加载中loading、无数据空状态、接口异常错误提示、白屏兜底全覆盖
+正确示例：
+<el-loading v-loading="loading">
+  <div v-if="tableList.length === 0" class="empty-box">
+    暂无数据
+  </div>
+  <div v-else>
+<!-- 列表渲染 -->
+  </div>
+</el-loading>
+错误示例：
+- 接口请求无loading，用户无感知
+- 直接渲染list[0].name，不做空判断，报错白屏
+- 接口报错无提示，页面空白无反馈
+------------------------------------------------------------------------------------------------
