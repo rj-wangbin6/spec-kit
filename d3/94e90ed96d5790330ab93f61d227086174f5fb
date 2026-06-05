@@ -1,0 +1,40 @@
+pyproject.toml
+  s_9ecfef8eb427f8::t_c888995847674d 3
+---
+{
+  "schema_version": "authorship/3.1.0",
+  "git_ai_version": "2.2.22",
+  "x_user_id": "104",
+  "base_commit_sha": "d394e90ed96d5790330ab93f61d227086174f5fb",
+  "prompts": {
+    "s_9ecfef8eb427f8::t_c888995847674d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5fdf0e60-e678-41c6-b469-b55110108235",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "huangfang <huangfang@ruijie.com.cn>",
+      "messages": [
+        {
+          "type": "user",
+          "text": "现在需要为当前项目创建多个发布概念\r\n\r\n- main  已存在      正式版,发布版本为x.x.x 例如当前版本为0.0.96\r\n- alpha 需新创建 \talpha版,发布版本为x.x.xa 例如正确版本为0.0.96a1\r\n- beta  需新创建    beta版,发布版本为x.x.xb 例如正确版本为0.0.96b1\r\n\r\n当前用户安装使用命令\r\n`uv tool install specify-cli --force --from git+https://github.com/rj-wangbin6/spec-kit`\r\n进行安装\r\n后续可以增加参数 允许指定版本进行安装,不指定默认为正式版\r\n\r\n你需要做\r\n1. 更新代码,创建分支,分支代码都来自main,新分支推送至远端\r\n2. 调整不同分支的 Workflow,代码位置.github/workflows ,需要根据你的经验,创建新的workflow或者单个workflow都可以\r\n3. 修改不同版本的下载安装命令,代码位置 src/specify_cli/__init__.py\r\n4. 提供不同版本的安装命令示例\r\n5. 修改python后,本地模拟拉取安装功能进行测试",
+          "timestamp": "2026-06-05T08:02:24.582Z"
+        }
+      ],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  },
+  "sessions": {
+    "s_9ecfef8eb427f8": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5fdf0e60-e678-41c6-b469-b55110108235",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "huangfang <huangfang@ruijie.com.cn>"
+    }
+  }
+}
