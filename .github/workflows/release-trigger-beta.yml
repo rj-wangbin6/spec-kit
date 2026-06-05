@@ -1,0 +1,126 @@
+name: Beta Release Trigger
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Base version (e.g., 0.0.96). Leave empty to read from pyproject.toml.'
+        required: false
+        type: string
+      number:
+        description: 'Beta number (e.g., 1 → 0.0.96b1, 2 → 0.0.96b2)'
+        required: false
+        default: '1'
+        type: string
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout beta branch
+        uses: actions/checkout@v6
+        with:
+          ref: beta
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_PAT }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Determine version
+        id: version
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          INPUT_NUMBER: ${{ github.event.inputs.number }}
+        run: |
+          NUMBER="${INPUT_NUMBER:-1}"
+
+          if [[ -n "$INPUT_VERSION" ]]; then
+            BASE_VERSION="${INPUT_VERSION#v}"
+            # Strip any existing pre-release suffix
+            BASE_VERSION=$(echo "$BASE_VERSION" | sed 's/[ab][0-9]*$//')
+            if [[ ! "$BASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Error: Invalid version format '$BASE_VERSION'. Must be X.Y.Z (e.g. 0.0.96)"
+              exit 1
+            fi
+          else
+            # Read from pyproject.toml, stripping any existing pre-release suffix
+            RAW=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+            BASE_VERSION=$(echo "$RAW" | sed 's/[ab][0-9]*$//')
+          fi
+
+          VERSION="${BASE_VERSION}b${NUMBER}"
+          TAG="v${VERSION}"
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Beta version: $VERSION (tag: $TAG)"
+
+      - name: Check if tag already exists
+        run: |
+          if git rev-parse "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "Error: Tag ${{ steps.version.outputs.tag }} already exists!"
+            exit 1
+          fi
+
+      - name: Update pyproject.toml
+        run: |
+          sed -i "s/version = \".*\"/version = \"${{ steps.version.outputs.version }}\"/" pyproject.toml
+          echo "Updated pyproject.toml to version ${{ steps.version.outputs.version }}"
+
+      - name: Update CHANGELOG.md
+        run: |
+          if [ -f "CHANGELOG.md" ]; then
+            DATE=$(date +%Y-%m-%d)
+            PREVIOUS_TAG=$(git tag -l 'v*' --sort=-version:refname | head -n 1)
+            if [[ -n "$PREVIOUS_TAG" ]]; then
+              COMMITS=$(git log --oneline "$PREVIOUS_TAG"..HEAD --no-merges --pretty=format:"- %s" 2>/dev/null || echo "- Beta pre-release")
+            else
+              COMMITS="- Beta pre-release"
+            fi
+
+            NEW_ENTRY=$(printf '%s\n' \
+              "" \
+              "## [${{ steps.version.outputs.version }}] - $DATE (beta)" \
+              "" \
+              "### Changed" \
+              "" \
+              "$COMMITS")
+
+            awk -v entry="$NEW_ENTRY" '/<!-- insert new changelog below this comment -->/ { print; print entry; next } {print}' CHANGELOG.md > CHANGELOG.md.tmp
+            mv CHANGELOG.md.tmp CHANGELOG.md
+          fi
+
+      - name: Commit version bump
+        run: |
+          if [ -f "CHANGELOG.md" ]; then
+            git add pyproject.toml CHANGELOG.md
+          else
+            git add pyproject.toml
+          fi
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: bump beta version to ${{ steps.version.outputs.version }}"
+          fi
+
+      - name: Create and push tag
+        run: |
+          git tag -a "${{ steps.version.outputs.tag }}" -m "Beta Release ${{ steps.version.outputs.tag }}"
+          git push origin beta
+          git push origin "${{ steps.version.outputs.tag }}"
+          echo "Beta branch and tag ${{ steps.version.outputs.tag }} pushed"
+
+      - name: Summary
+        run: |
+          echo "✅ Beta version bumped to ${{ steps.version.outputs.version }}"
+          echo "✅ Tag ${{ steps.version.outputs.tag }} created and pushed"
+          echo ""
+          echo "Install command:"
+          echo "  uv tool install specify-cli --force --from git+https://github.com/rj-wangbin6/spec-kit@${{ steps.version.outputs.tag }}"

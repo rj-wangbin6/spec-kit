@@ -16,7 +16,16 @@ VERSION="$1"
 VERSION_NO_PREFIX=${VERSION#v}
 VERSION_NO_PREFIX=${VERSION_NO_PREFIX#r}
 
+# Detect pre-release: check env var set by workflow, or infer from tag
+PRERELEASE_FLAG=""
+if [[ "${PRERELEASE:-false}" == "true" ]]; then
+  PRERELEASE_FLAG="--prerelease"
+elif [[ "$VERSION_NO_PREFIX" =~ ^[0-9]+\.[0-9]+\.[0-9]+(a|b)[0-9]+$ ]]; then
+  PRERELEASE_FLAG="--prerelease"
+fi
+
 gh release create "$VERSION" \
+  $PRERELEASE_FLAG \
   .genreleases/spec-kit-template-copilot-sh-"$VERSION".zip \
   .genreleases/spec-kit-template-copilot-ps-"$VERSION".zip \
   .genreleases/spec-kit-template-claude-sh-"$VERSION".zip \

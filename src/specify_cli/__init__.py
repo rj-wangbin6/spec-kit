@@ -59,6 +59,11 @@ from datetime import datetime, timezone
 ssl_context = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 client = httpx.Client(verify=ssl_context)
 
+# Repository configuration
+REPO_OWNER = "rj-wangbin6"
+REPO_NAME = "spec-kit"
+REPO_BASE_URL = f"https://github.com/{REPO_OWNER}/{REPO_NAME}"
+
 def _github_token(cli_token: str | None = None) -> str | None:
     """Return sanitized GitHub token (cli arg takes precedence) or None."""
     return ((cli_token or os.getenv("GH_TOKEN") or os.getenv("GITHUB_TOKEN") or "").strip()) or None
@@ -835,8 +840,8 @@ def merge_json_files(existing_path: Path, new_content: Any, verbose: bool = Fals
     return merged
 
 def download_template_from_github(ai_assistant: str, download_dir: Path, *, script_type: str = "sh", verbose: bool = True, show_progress: bool = True, client: httpx.Client = None, debug: bool = False, github_token: str = None) -> Tuple[Path, dict]:
-    repo_owner = "rj-wangbin6"
-    repo_name = "spec-kit"
+    repo_owner = REPO_OWNER
+    repo_name = REPO_NAME
     if client is None:
         client = httpx.Client(verify=ssl_context)
 
@@ -2450,8 +2455,8 @@ def version():
             pass
     
     # Fetch latest template release version
-    repo_owner = "github"
-    repo_name = "spec-kit"
+    repo_owner = REPO_OWNER
+    repo_name = REPO_NAME
     api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
     
     template_version = "unknown"
@@ -2503,6 +2508,107 @@ def version():
 
     console.print(panel)
     console.print()
+
+
+@app.command()
+def upgrade(
+    channel: str = typer.Option(None, "--channel", help="Release channel: stable, alpha, or beta"),
+    tag: str = typer.Option(None, "--tag", help="Specific version tag to install (e.g. v0.0.96, v0.0.96a1, v0.0.96b1)"),
+):
+    """Show install/upgrade commands for different release channels.
+
+    Examples:
+        specify upgrade                    # Show all channel commands
+        specify upgrade --channel stable   # Show stable install command
+        specify upgrade --channel alpha    # Show alpha install command
+        specify upgrade --channel beta     # Show beta install command
+        specify upgrade --tag v0.0.96a1   # Show command for a specific tag
+    """
+    show_banner()
+
+    import importlib.metadata
+    cli_version = "unknown"
+    try:
+        cli_version = importlib.metadata.version("specify-cli")
+    except Exception:
+        pass
+
+    console.print(f"[cyan]Current installed version:[/cyan] [bold]{cli_version}[/bold]\n")
+
+    base = REPO_BASE_URL
+
+    channels = {
+        "stable": {
+            "label": "Stable (main branch)",
+            "branch_cmd": f"uv tool install specify-cli --force --from git+{base}",
+            "tag_prefix": "v",
+            "note": "Latest stable release from main branch",
+        },
+        "alpha": {
+            "label": "Alpha (pre-release)",
+            "branch_cmd": f"uv tool install specify-cli --force --from git+{base}@alpha",
+            "tag_prefix": "v",
+            "note": "Latest alpha build — may include experimental features",
+        },
+        "beta": {
+            "label": "Beta (pre-release)",
+            "branch_cmd": f"uv tool install specify-cli --force --from git+{base}@beta",
+            "tag_prefix": "v",
+            "note": "Latest beta build — feature-complete but may have bugs",
+        },
+    }
+
+    valid_channels = list(channels.keys())
+    if channel and channel not in valid_channels:
+        console.print(f"[red]Error:[/red] Invalid channel '{channel}'. Choose from: {', '.join(valid_channels)}")
+        raise typer.Exit(1)
+
+    if tag:
+        # Show command for a specific tag
+        tag_clean = tag.lstrip("v")
+        import re
+        if re.search(r'a\d+$', tag_clean):
+            ch = "alpha"
+        elif re.search(r'b\d+$', tag_clean):
+            ch = "beta"
+        else:
+            ch = "stable"
+        vtag = tag if tag.startswith("v") else f"v{tag}"
+        cmd = f"uv tool install specify-cli --force --from git+{base}@{vtag}"
+        console.print(Panel(
+            f"[dim]Channel:[/dim] {channels[ch]['label']}\n\n[cyan]{cmd}[/cyan]",
+            title=f"[bold]Install specify-cli {vtag}[/bold]",
+            border_style="cyan",
+            padding=(1, 2),
+        ))
+        return
+
+    target_channels = [channel] if channel else valid_channels
+    for ch in target_channels:
+        info = channels[ch]
+        content_lines = [
+            f"[dim]{info['note']}[/dim]",
+            "",
+            "[bold]Latest from branch:[/bold]",
+            f"  [cyan]{info['branch_cmd']}[/cyan]",
+            "",
+            "[bold]Specific version tag:[/bold]",
+            f"  [cyan]uv tool install specify-cli --force --from git+{base}@<{info['tag_prefix']}TAG>[/cyan]",
+        ]
+        if ch == "alpha":
+            content_lines.append("  [dim]Example: uv tool install specify-cli --force --from git+" + base + "@v0.0.96a1[/dim]")
+        elif ch == "beta":
+            content_lines.append("  [dim]Example: uv tool install specify-cli --force --from git+" + base + "@v0.0.96b1[/dim]")
+        else:
+            content_lines.append("  [dim]Example: uv tool install specify-cli --force --from git+" + base + "@v0.0.96[/dim]")
+
+        console.print(Panel(
+            "\n".join(content_lines),
+            title=f"[bold]{info['label']}[/bold]",
+            border_style="cyan" if ch == "stable" else ("yellow" if ch == "alpha" else "magenta"),
+            padding=(1, 2),
+        ))
+        console.print()
 
 
 # ===== Extension Commands =====
