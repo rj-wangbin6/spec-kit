@@ -1,0 +1,147 @@
+.github/workflows/release-trigger-beta.yml
+  s_9ecfef8eb427f8::t_b306c6c7b0d989 1-126
+src/specify_cli/__init__.py
+  s_9ecfef8eb427f8::t_6ce279528fcdf9 2513-2613
+  s_9ecfef8eb427f8::t_7d6de22dc3e341 62-66,843-844,2458-2459
+.github/workflows/scripts/create-github-release.sh
+  s_9ecfef8eb427f8::t_a485cc7eec3a19 19-26
+  s_9ecfef8eb427f8::t_fa9013da2dbb08 28
+.github/workflows/release.yml
+  s_9ecfef8eb427f8::t_787394b739bfb5 74
+  s_9ecfef8eb427f8::t_b8bcec219f7dd7 28-39
+.github/workflows/release-trigger-alpha.yml
+  s_9ecfef8eb427f8::t_a691433b137ed4 1-126
+---
+{
+  "schema_version": "authorship/3.1.0",
+  "git_ai_version": "2.2.22",
+  "x_user_id": "104",
+  "base_commit_sha": "ee2f299a0e51c7d0e2a872bf5bf2ba992ed10ddb",
+  "prompts": {
+    "s_9ecfef8eb427f8::t_6ce279528fcdf9": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5fdf0e60-e678-41c6-b469-b55110108235",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "huangfang <huangfang@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 384,
+      "total_deletions": 4,
+      "accepted_lines": 101,
+      "overriden_lines": 0
+    },
+    "s_9ecfef8eb427f8::t_787394b739bfb5": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5fdf0e60-e678-41c6-b469-b55110108235",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "huangfang <huangfang@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 384,
+      "total_deletions": 4,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "s_9ecfef8eb427f8::t_7d6de22dc3e341": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5fdf0e60-e678-41c6-b469-b55110108235",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "huangfang <huangfang@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 384,
+      "total_deletions": 4,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    },
+    "s_9ecfef8eb427f8::t_a485cc7eec3a19": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5fdf0e60-e678-41c6-b469-b55110108235",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "huangfang <huangfang@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 384,
+      "total_deletions": 4,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    },
+    "s_9ecfef8eb427f8::t_a691433b137ed4": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5fdf0e60-e678-41c6-b469-b55110108235",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "huangfang <huangfang@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 384,
+      "total_deletions": 4,
+      "accepted_lines": 126,
+      "overriden_lines": 0
+    },
+    "s_9ecfef8eb427f8::t_b306c6c7b0d989": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5fdf0e60-e678-41c6-b469-b55110108235",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "huangfang <huangfang@ruijie.com.cn>",
+      "messages": [
+        {
+          "type": "user",
+          "text": "现在需要为当前项目创建多个发布概念\r\n\r\n- main  已存在      正式版,发布版本为x.x.x 例如当前版本为0.0.96\r\n- alpha 需新创建 \talpha版,发布版本为x.x.xa 例如正确版本为0.0.96a1\r\n- beta  需新创建    beta版,发布版本为x.x.xb 例如正确版本为0.0.96b1\r\n\r\n当前用户安装使用命令\r\n`uv tool install specify-cli --force --from git+https://github.com/rj-wangbin6/spec-kit`\r\n进行安装\r\n后续可以增加参数 允许指定版本进行安装,不指定默认为正式版\r\n\r\n你需要做\r\n1. 更新代码,创建分支,分支代码都来自main,新分支推送至远端\r\n2. 调整不同分支的 Workflow,代码位置.github/workflows ,需要根据你的经验,创建新的workflow或者单个workflow都可以\r\n3. 修改不同版本的下载安装命令,代码位置 src/specify_cli/__init__.py\r\n4. 提供不同版本的安装命令示例\r\n5. 修改python后,本地模拟拉取安装功能进行测试",
+          "timestamp": "2026-06-05T08:02:24.582Z"
+        }
+      ],
+      "total_additions": 384,
+      "total_deletions": 4,
+      "accepted_lines": 126,
+      "overriden_lines": 0
+    },
+    "s_9ecfef8eb427f8::t_b8bcec219f7dd7": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5fdf0e60-e678-41c6-b469-b55110108235",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "huangfang <huangfang@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 384,
+      "total_deletions": 4,
+      "accepted_lines": 12,
+      "overriden_lines": 0
+    },
+    "s_9ecfef8eb427f8::t_fa9013da2dbb08": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5fdf0e60-e678-41c6-b469-b55110108235",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "huangfang <huangfang@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 384,
+      "total_deletions": 4,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  },
+  "humans": {
+    "h_9366ae76c4f08a": {
+      "author": "huangfang <huangfang@ruijie.com.cn>"
+    }
+  },
+  "sessions": {
+    "s_9ecfef8eb427f8": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5fdf0e60-e678-41c6-b469-b55110108235",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "huangfang <huangfang@ruijie.com.cn>"
+    }
+  }
+}
