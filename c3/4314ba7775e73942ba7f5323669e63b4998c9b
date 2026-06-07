@@ -1,0 +1,50 @@
+.github/workflows/scripts/create-release-packages.sh
+  s_9ecfef8eb427f8::t_459ae1a8aa4daa 21-22
+---
+{
+  "schema_version": "authorship/3.1.0",
+  "git_ai_version": "2.2.22",
+  "x_user_id": "104",
+  "base_commit_sha": "c34314ba7775e73942ba7f5323669e63b4998c9b",
+  "prompts": {
+    "s_9ecfef8eb427f8::t_459ae1a8aa4daa": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5fdf0e60-e678-41c6-b469-b55110108235",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "huangfang <huangfang@ruijie.com.cn>",
+      "messages": [
+        {
+          "type": "user",
+          "text": "现在需要为当前项目创建多个发布概念\r\n\r\n- main  已存在      正式版,发布版本为x.x.x 例如当前版本为0.0.96\r\n- alpha 需新创建 \talpha版,发布版本为x.x.xa 例如正确版本为0.0.96a1\r\n- beta  需新创建    beta版,发布版本为x.x.xb 例如正确版本为0.0.96b1\r\n\r\n当前用户安装使用命令\r\n`uv tool install specify-cli --force --from git+https://github.com/rj-wangbin6/spec-kit`\r\n进行安装\r\n后续可以增加参数 允许指定版本进行安装,不指定默认为正式版\r\n\r\n你需要做\r\n1. 更新代码,创建分支,分支代码都来自main,新分支推送至远端\r\n2. 调整不同分支的 Workflow,代码位置.github/workflows ,需要根据你的经验,创建新的workflow或者单个workflow都可以\r\n3. 修改不同版本的下载安装命令,代码位置 src/specify_cli/__init__.py\r\n4. 提供不同版本的安装命令示例\r\n5. 修改python后,本地模拟拉取安装功能进行测试",
+          "timestamp": "2026-06-05T08:02:24.582Z"
+        },
+        {
+          "type": "user",
+          "text": "我在远端没有看到 alpha版本,帮我触发一下",
+          "timestamp": "2026-06-07T08:21:40.993Z"
+        },
+        {
+          "type": "user",
+          "text": "Run chmod +x .github/workflows/scripts/create-release-packages.sh\r\n\r\n[](https://github.com/rj-wangbin6/spec-kit/actions/runs/27087250253/job/79944044406#step:6:2)  chmod +x .github/workflows/scripts/create-release-packages.sh\r\n\r\n[](https://github.com/rj-wangbin6/spec-kit/actions/runs/27087250253/job/79944044406#step:6:3)  .github/workflows/scripts/create-release-packages.sh v0.0.96a1\r\n\r\n[](https://github.com/rj-wangbin6/spec-kit/actions/runs/27087250253/job/79944044406#step:6:4)  shell: /usr/bin/bash -e {0}\r\n\r\n[](https://github.com/rj-wangbin6/spec-kit/actions/runs/27087250253/job/79944044406#step:6:6)Version must look like v0.0.0 or r0.0.0\r\n\r\n[](https://github.com/rj-wangbin6/spec-kit/actions/runs/27087250253/job/79944044406#step:6:7)Error: Process completed with exit code 1.\r\n远端执行失败",
+          "timestamp": "2026-06-07T08:24:07.216Z"
+        }
+      ],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  },
+  "sessions": {
+    "s_9ecfef8eb427f8": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5fdf0e60-e678-41c6-b469-b55110108235",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "huangfang <huangfang@ruijie.com.cn>"
+    }
+  }
+}
