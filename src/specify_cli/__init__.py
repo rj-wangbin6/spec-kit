@@ -845,11 +845,15 @@ def download_template_from_github(ai_assistant: str, download_dir: Path, *, scri
     if client is None:
         client = httpx.Client(verify=ssl_context)
 
-    if verbose:
-        console.print("[cyan]Fetching latest release information...[/cyan]")
-    api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
+    # Determine which release to fetch.
+    # If the installed CLI version is a pre-release (alpha/beta/rc), try to
+    # download the matching release first so that templates always match the
+    # installed CLI.  Fall back to releases/latest when no matching tag exists.
+    cli_ver = get_speckit_version()
+    versioned_tag = f"v{cli_ver}" if cli_ver not in ("unknown", "") else None
+    is_prerelease_ver = versioned_tag and any(marker in cli_ver for marker in ("a", "b", "rc"))
 
-    try:
+    def _fetch_release(api_url: str) -> dict:
         response = client.get(
             api_url,
             timeout=30,
@@ -858,15 +862,32 @@ def download_template_from_github(ai_assistant: str, download_dir: Path, *, scri
         )
         status = response.status_code
         if status != 200:
-            # Format detailed error message with rate-limit info
             error_msg = _format_rate_limit_error(status, response.headers, api_url)
             if debug:
                 error_msg += f"\n\n[dim]Response body (truncated 500):[/dim]\n{response.text[:500]}"
             raise RuntimeError(error_msg)
         try:
-            release_data = response.json()
+            return response.json()
         except ValueError as je:
             raise RuntimeError(f"Failed to parse release JSON: {je}\nRaw (truncated 400): {response.text[:400]}")
+
+    if verbose:
+        console.print("[cyan]Fetching release information...[/cyan]")
+
+    try:
+        release_data = None
+        if is_prerelease_ver:
+            # Try to fetch the exact matching pre-release tag first
+            tag_api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/tags/{versioned_tag}"
+            try:
+                release_data = _fetch_release(tag_api_url)
+            except RuntimeError:
+                # Tag-specific release not found; fall through to latest
+                release_data = None
+
+        if release_data is None:
+            api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
+            release_data = _fetch_release(api_url)
     except Exception as e:
         console.print("[red]Error fetching release information[/red]")
         console.print(Panel(str(e), title="Fetch Error", border_style="red"))
