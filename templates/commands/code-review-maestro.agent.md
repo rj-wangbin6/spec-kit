@@ -135,18 +135,13 @@ argument-hint: "输入评审场景、项目路径、代码范围、需求来源�
 
 若当前是基于 Git 仓库代码的评审，则根据收集的变更记录，严格按照评审规则文件中的规则顺序，**一条规则一条规则执行审查**，禁止跳步、合并多条规则后一次性给结论。
 
-- C语言项目文件评审规则文档：`.specify/templates/code-review-c/c-language-specification.md` - C语言代码审查规则规范
-- Java前后端项目评审规则文档：`.specify/templates/code-review/backend-specification.md` 和 `.specify/templates/code-review/frontend-specification.md`
 
-单条规则执行顺序：
+先调用 codereview-mcp-server mcp 的 get_rule_groups 查询 Java 规则分组信息。
+再调用 codereview-mcp-server mcp 的 get_rules_by_group 查询每个规则分组下的规则详情。
 
-1. 宣布当前规则
-2. 基于阶段 2 的证据，按提交、目录或模块并行调用 `speckit.code-review-rule-checker`，并要求读取 `02-change-collection.md`、对应的 `05-path-<scope>.md` 以及可选的 `04-requirement-check.md`
-3. 将当前规则的每个范围结果分别写入 `06-rule-<rule-no>-<scope>.md`
-4. 合并当前规则结论，结论仅允许为：`已审查-发现问题`、`已审查-未发现问题`、`阻塞`
-5. 立即调用 `speckit.code-review-report-writer` 更新当前规则的 checklist、说明和问题清单，并要求读取本条规则对应的 `06-rule-<rule-no>-<scope>.md`
-6. 将本次报告更新记录写入 `07-report-update-<rule-no>.md`
-7. 向用户输出当前规则的阶段性结论
+再根据 get_rule_groups 返回的组数量 多次调用subagent调用 `speckit.code-review-rule-checker`
+每次调用时，传入当前规则编号、规则名称、规则原文或摘要、当前检查范围（提交记录 / diff / 指定目录 / 指定模块）、相关变更记录、已知调用链事实等信息。
+
 
 建议向用户使用以下固定输出结构，确保可以看到“逐条执行”的过程：
 
