@@ -21,7 +21,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout beta branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           ref: beta
           fetch-depth: 0
