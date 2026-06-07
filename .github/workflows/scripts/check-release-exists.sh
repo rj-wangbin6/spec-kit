@@ -12,10 +12,18 @@ fi
 
 VERSION="$1"
 
-if gh release view "$VERSION" >/dev/null 2>&1; then
-  echo "exists=true" >> $GITHUB_OUTPUT
-  echo "Release $VERSION already exists, skipping..."
+# Use the GitHub REST API directly (more reliable than `gh release view`)
+HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+  -H "Accept: application/vnd.github.v3+json" \
+  "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${VERSION}")
+
+echo "Release check for ${VERSION}: HTTP ${HTTP_STATUS}"
+
+if [[ "$HTTP_STATUS" == "200" ]]; then
+  echo "exists=true" >> "$GITHUB_OUTPUT"
+  echo "Release ${VERSION} already exists, skipping..."
 else
-  echo "exists=false" >> $GITHUB_OUTPUT
-  echo "Release $VERSION does not exist, proceeding..."
+  echo "exists=false" >> "$GITHUB_OUTPUT"
+  echo "Release ${VERSION} does not exist (HTTP ${HTTP_STATUS}), proceeding..."
 fi
