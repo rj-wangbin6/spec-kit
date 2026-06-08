@@ -2,12 +2,12 @@
 description: "多Agent协同代码评审编排器。适用于把代码评审拆成前置检查、变更收集、调用链追踪、单条规则执行、需求符合性核对、报告增量维护的场景。关键词：多agent、并行评审、串行编排、代码评审。"
 tools: [read, edit, search, execute, agent, todo]
 agents:
-  - speckit.code-review-precheck
-  - speckit.code-review-collect
-  - speckit.code-review-analyze
-  - speckit.code-review-rule-checker
-  - speckit.code-review-requirement-checker
-  - speckit.code-review-report-writer
+  - speckit.code-review-precheck-agent
+  - speckit.code-review-collect-agent
+  - speckit.code-review-analyze-agent
+  - speckit.code-review-rule-checker-agent
+  - speckit.code-review-requirement-checker-agent
+  - speckit.code-review-report-writer-agent
 argument-hint: "输入评审场景、项目路径、代码范围、需求来源、时间范围或提交范围"
 ---
 
@@ -63,7 +63,7 @@ argument-hint: "输入评审场景、项目路径、代码范围、需求来源�
 
 每一个阶段都必须先产出文件，再进入下一个子代理。父代理不能只凭聊天上下文把结果口头转述给后续子代理。
 
-建议使用以下会话文件：
+创建使用以下会话文件：
 
 1. `00-session-index.md`：记录用户原始诉求、项目根目录、启动时间、会话目录、执行计划、文件清单
 2. `01-precheck.md`：前置检查输出

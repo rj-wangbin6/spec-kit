@@ -1,6 +1,8 @@
 ---
 description: "代码调用链追踪子代理。适用于 C/Java/前端项目的入口识别、跨模块调用追踪、第三方边界分析。关键词：调用链、路径追踪、函数链路、接口链路、模块边界。"
 tools: [read, search]
+user-invocable: false
+
 ---
 
 # Code Review Analyze Agent 1.0

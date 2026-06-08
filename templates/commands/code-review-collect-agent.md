@@ -1,6 +1,8 @@
 ---
 description: "代码评审变更收集子代理。适用于按开发者、按需求、按本地未提交代码、按目录或模块收集待审查范围。关键词：提交记录、git diff、需求范围、目录审查、模块审查。"
 tools: [read, search, execute]
+user-invocable: false
+
 ---
 
 
