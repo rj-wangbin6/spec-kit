@@ -1,0 +1,17 @@
+templates/commands/code-review-collect-agent.md
+  h_edde5220d38002 4-5
+templates/commands/code-review-analyze-agent.md
+  h_edde5220d38002 4-5
+---
+{
+  "schema_version": "authorship/3.1.0",
+  "git_ai_version": "2.2.24",
+  "x_user_id": "105",
+  "base_commit_sha": "272356ddb528aa1ccc3d37a40f2a24841ecb4ebc",
+  "prompts": {},
+  "humans": {
+    "h_edde5220d38002": {
+      "author": "longyu <longyu@ruijie.com.cn>"
+    }
+  }
+}
