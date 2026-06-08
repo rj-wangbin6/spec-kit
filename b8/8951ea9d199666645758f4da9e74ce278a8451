@@ -1,0 +1,18 @@
+pyproject.toml
+  h_6d55b12ff20c3c 3
+---
+{
+  "schema_version": "authorship/3.1.0",
+  "git_ai_version": "2.2.24",
+  "x_user_id": "105",
+  "base_commit_sha": "b88951ea9d199666645758f4da9e74ce278a8451",
+  "prompts": {},
+  "humans": {
+    "h_6d55b12ff20c3c": {
+      "author": "rj-longyu <longyu@ruijie.com.cn>"
+    },
+    "h_edde5220d38002": {
+      "author": "longyu <longyu@ruijie.com.cn>"
+    }
+  }
+}
