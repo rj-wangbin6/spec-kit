@@ -1,0 +1,467 @@
+templates/commands/code-review-analyze-agent.md
+  s_bcc5a4277ad28e::t_501c37a26cd899 28,30-31
+.github/agents/speckit.code-review.agent.md
+  h_6d55b12ff20c3c 1-3,5-7,9,13-29,31,33-36,38,40-41,43,45,47-50,52-56,58-68,71-72,75-79,81,83-85,87-92,95-103,106-134,136,138-143,145,147-149,151,153,155-160,162-196,199-218,221,223-225,227,229,231,233-237,239-243,245-247,249-257,259-261,264,266-271,273,275,277-281,283,285-286,288,290-322,325-344,346-360,363,365-384,386-411,413-495,497-637,640-704,708-757,759,761,763-768,770,772,774,776,778-786,788-795,797-910,913,915,917-924,926,929-932,937-953,955-960,962-963,965-968,970-987,989-1002,1005-1046,1050,1052-1060,1062,1066-1162,1165,1167-1208,1210,1212-1257,1261,1263-1270,1272-1296,1298-1303,1305,1307,1309-1313,1315-1319,1321-1324,1328-1348
+  h_6d55b12ff20c3c 8,30,32,37,80,82,135,137,144,146,150,152,154,161,345,361,364,385,412,496,775,777,787,796,914,916,933,1064,1166,1209,1211,1262,1271,1297
+templates/commands/code-review-analyze.md
+  s_bcc5a4277ad28e::t_501c37a26cd899 28,30
+templates/commands/code-review-report-verifier-agent.md
+  s_bcc5a4277ad28e::t_f3f7db03581186 115
+  s_bcc5a4277ad28e::t_544abef1ff3a21 30-42,56,64,66,79,101-106
+  s_bcc5a4277ad28e::t_a91bcdea34e5d7 107
+templates/code-review/report-contract.json
+  s_bcc5a4277ad28e::t_56710a304e3df3 44
+  s_bcc5a4277ad28e::t_a91bcdea34e5d7 1-43,45-78
+templates/code-review/template.md
+  s_bcc5a4277ad28e::t_d9a6ff3bb4429e 37-38,293-299
+  s_bcc5a4277ad28e::t_a91bcdea34e5d7 300
+templates/commands/code-review.md
+  h_6d55b12ff20c3c 740
+  s_bcc5a4277ad28e::t_a392b3e8f0d08b 777-778,780-784
+  s_bcc5a4277ad28e::t_f3f7db03581186 736,753-755,768-771
+  s_bcc5a4277ad28e::t_7e123c4ca62068 773
+  s_bcc5a4277ad28e::t_244824691e369a 779
+  s_bcc5a4277ad28e::t_a91bcdea34e5d7 1154,1240
+templates/commands/代码评审多Agent智能体.md
+  s_bcc5a4277ad28e::t_5b00d2153a37b1 492-493,498,504
+templates/code-review/scripts/validate-report.mjs
+  s_bcc5a4277ad28e::t_244824691e369a 214
+  s_bcc5a4277ad28e::t_0a5ce9e0bc71bb 144
+  h_6d55b12ff20c3c 100
+  s_bcc5a4277ad28e::t_3ea42dafce7587 99,101,105-106,109-111
+  s_bcc5a4277ad28e::t_a91bcdea34e5d7 98,103,108
+  s_bcc5a4277ad28e::t_a91bcdea34e5d7 1-97,102,104,107,112-143,145-213,215-241
+---
+{
+  "schema_version": "authorship/3.1.0",
+  "git_ai_version": "2.2.55",
+  "x_user_id": "105",
+  "base_commit_sha": "b46fe78e1d64da7c1b74d3573c0bde98b7965410",
+  "prompts": {
+    "s_5873960957e019::t_27e527c59180d2": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "610a7c8e-4e21-4513-b36c-8e344d13ca76",
+        "model": "customendpoint/公司平台/gpt-6.1-terra"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [
+        {
+          "type": "user",
+          "text": "[代码评审多Agent智能体.md](file:///d%3A/develop/githubspeckit/spec-kit/templates/commands/%E4%BB%A3%E7%A0%81%E8%AF%84%E5%AE%A1%E5%A4%9AAgent%E6%99%BA%E8%83%BD%E4%BD%93.md) [code-review.md](file:///d%3A/develop/githubspeckit/spec-kit/templates/commands/code-review.md) 现在帮我检查下当前这个项目的这两个脚手架项目的文件，里面关于引用其他自定义agent的时候，名称不对，帮我他统一检查修改下。有些缺少了-agent这个后缀，例如引用security的地方就是。应该还有些其他的问题",
+          "timestamp": "2026-11-10T01:38:04.652Z"
+        },
+        {
+          "type": "user",
+          "text": "有些地方你改多了，有些我看你删除了，这样不行。某些回退下，现在调整一下，只修改：code-review-security这个",
+          "timestamp": "2026-11-10T01:47:49.793Z"
+        },
+        {
+          "type": "user",
+          "text": "再检查下，好像这个speckit.code-review-report-verifier-agent  speckit.code-review-report-verifier也存在问题，",
+          "timestamp": "2026-11-10T07:52:57.213Z"
+        }
+      ],
+      "total_additions": 4,
+      "total_deletions": 4,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_0a5ce9e0bc71bb": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_19bad429df79b2": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_244824691e369a": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_2d9d23089ad76f": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_34530fd691ef3b": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 322,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_3d63b9ad0d19f6": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_3ea42dafce7587": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_501c37a26cd899": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_544abef1ff3a21": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 24,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_56710a304e3df3": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 35,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_5b00d2153a37b1": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [
+        {
+          "type": "user",
+          "text": "[code-review.md](file:///d%3A/develop/githubspeckit/spec-kit/templates/commands/code-review.md) 客观的分析下我做的这个脚手架项目中的代码评审的入口，深入分析下当前的流程，看看存在可以改善或提升的点，或者架构设计，以便能够让最终的评审结果质量高。以及与harness工程思想的匹配程度",
+          "timestamp": "2026-11-10T07:42:47.076Z"
+        },
+        {
+          "type": "user",
+          "text": "我觉得你说的第5点比较好、第7点以及确定性质量门控的，我比较认可。我希望你帮我修复这个问题：1. **中高：独立复核更擅长减少误报，不足以发现漏报。** `code-review-report-verifier-agent.md:30`主动找反证、检查版本和覆盖记录，这部分设计很好。但“每条已有发现都正确”和“每个文件有审查记录”，仍不能证明关键风险被识别。建议拆成发现真实性复核与风险覆盖复核：后者从变更和攻击面独立提出检查假设，再对照原报告，避免完全受已有问题列表锚定。1. **中：多处规则漂移已经出现。** 前置检查支持 C 专用模板，`步骤 9`却固定通用模板；`code-review-analyze-agent.md:29`允许“对比需求说明实现符合度”，入口又要求不做符合性判断；入口主要三级严重度，报告模板还有 P1。不是文字问题，而是多个代理可能给出不同契约。模板、枚举、职责和路径应由一个权威定义派生。",
+          "timestamp": "2026-11-10T08:08:18.444Z"
+        },
+        {
+          "type": "user",
+          "text": "我觉得你说的第5点比较好、第7点以及确定性质量门控的，我比较认可。我之前也发现了某些生成后的报告文件里面有几个关键的章节丢失了，因此我希望你可以给我写个script能够实现确定性质量门控\t偏低\t上传许可依赖模型输出，未见绑定报告内容的程序校验这个报告里面一些关键章节的校验需要使用nodejs脚本。文件放在templates下的codereview文件夹下的scripts文件夹中。同时我希望你帮我优化这2个这个问题：1. **中高：独立复核更擅长减少误报，不足以发现漏报。** `code-review-report-verifier-agent.md:30`主动找反证、检查版本和覆盖记录，这部分设计很好。但“每条已有发现都正确”和“每个文件有审查记录”，仍不能证明关键风险被识别。建议拆成发现真实性复核与风险覆盖复核：后者从变更和攻击面独立提出检查假设，再对照原报告，避免完全受已有问题列表锚定。1. **中：多处规则漂移已经出现。** 前置检查支持 C 专用模板，`步骤 9`却固定通用模板；`code-review-analyze-agent.md:29`允许“对比需求说明实现符合度”，入口又要求不做符合性判断；入口主要三级严重度，报告模板还有 P1。不是文字问题，而是多个代理可能给出不同契约。模板、枚举、职责和路径应由一个权威定义派生。",
+          "timestamp": "2026-11-10T08:13:28.389Z"
+        },
+        {
+          "type": "user",
+          "text": "只读研究，为用户请求制定可执行计划，不修改文件。工作区 d:/develop/githubspeckit/spec-kit。用户要求：Node.js 确定性报告关键章节校验脚本放 templates/codereview/scripts；绑定报告内容的上传门控；优化 templates/commands/code-review-report-verifier-agent.md 的漏报覆盖复核（独立于已有发现）；统一 C/通用模板选择、路径代理不做需求判定、严重度含 P1 的契约。读取 templates/code-review/template.md 和 templates/code-review-c/c-template.md 全部标题，code-review.md 相关门控与规则部分，precheck、requirement-checker、analyze-agent、security-agent、report-writer/validator 等关联定义及打包脚本。返回：精确必需/条件章节列表，两模板差异，建议 CLI 参数及 JSON 验证回执结构（sha256），新增脚本如何打包路径，最小修改文件集和测试方案，现有 node 测试/依赖情况。重点风险：Markdown fenced code中的假标题、重复/空章节、无需求无全栈的明确不适用、报告修改后回执失效、不要脚本声称语义评审通过。给文件行号。",
+          "timestamp": "2026-11-10T08:13:53.138Z"
+        },
+        {
+          "type": "user",
+          "text": "**门控脚本**那里的这个东西我觉得不需要做意义不大。：生成包含报告原始字节 SHA-256 的 JSON 回执。先帮我更改这个吧，我看看",
+          "timestamp": "2026-11-10T08:30:36.455Z"
+        },
+        {
+          "type": "user",
+          "text": "帮我先开始做一版，脚本中的错误文案需要友好性输出，这样AI看到后，可以自己优化报告",
+          "timestamp": "2026-11-10T08:32:29.863Z"
+        },
+        {
+          "type": "user",
+          "text": "C的不用管先",
+          "timestamp": "2026-11-10T08:33:56.250Z"
+        },
+        {
+          "type": "user",
+          "text": "你的目录放错了，是已经存在的这个目录：code-review",
+          "timestamp": "2026-11-10T08:38:24.974Z"
+        },
+        {
+          "type": "user",
+          "text": "根目录下我放了个code-review-2026-11-10-fangmenglong.md之前已有结果的文件，你测试下脚本看看",
+          "timestamp": "2026-11-10T08:41:32.792Z"
+        },
+        {
+          "type": "user",
+          "text": "根目录下我放了个code-review-2026-11-10-fangmenglong.md之前已有结果的文件，你测试下脚本看看",
+          "timestamp": "2026-11-10T08:44:48.483Z"
+        },
+        {
+          "type": "user",
+          "text": "根目录下我放了个code-review-2026-11-10-fangmenglong.md之前已有结果的文件，你测试下脚本看看",
+          "timestamp": "2026-11-10T08:47:12.595Z"
+        },
+        {
+          "type": "user",
+          "text": "接下来看看你说的这个复核优化的处理下吧，我看看：复核优化\r\n将独立复核调整为两个阶段：\r\n\r\n先从变更范围、入口和关键路径独立提出风险检查假设，再对照报告，减少已有问题列表带来的锚定。\r\n核验已有发现的真实性，并输出遗漏候选、证据、反证、未覆盖范围及处理状态。确认的新问题必须补入报告并重新复核，不能直接通过。",
+          "timestamp": "2026-11-10T08:53:06.397Z"
+        },
+        {
+          "type": "user",
+          "text": "你最早的时候，说的这个，咱们计划如何优化：\r\n这条链的优点是边界明确，缺点是把大量工作串行化，而且评审粒度绑定提交数量。一个功能分成十个提交，会反复追踪相同链路；后续提交修好的问题，也可能在最终报告里继续计数。\r\n\r\n建议保留提交溯源，但以变更行为和风险单元调度：先构建最终变更事实，再针对权限、状态转换、事务、外部调用、数据契约等独立分析；历史逐提交模式作为可选用途。需求、安全、规则、接口共享同一版本事实包，输入齐全后可以独立执行，不必全部依赖前一个维度的结论。",
+          "timestamp": "2026-11-10T09:23:55.106Z"
+        }
+      ],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_6fea6e0ffe33c1": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_7d61c075559081": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_7e123c4ca62068": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_806a1e6d8789b1": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_893278859e2c76": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_9d83fccdc28312": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 77,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_a392b3e8f0d08b": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_a91bcdea34e5d7": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_b782928eb5086a": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_d9a6ff3bb4429e": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_ec7fdd8ea089ce": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_f3f7db03581186": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    },
+    "s_bcc5a4277ad28e::t_feeb25dc4f8696": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 788,
+      "total_deletions": 49,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  },
+  "humans": {
+    "h_6d55b12ff20c3c": {
+      "author": "rj-longyu <longyu@ruijie.com.cn>"
+    },
+    "h_edde5220d38002": {
+      "author": "longyu <longyu@ruijie.com.cn>"
+    }
+  },
+  "sessions": {
+    "s_bcc5a4277ad28e": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d841e92f-cd96-4163-9770-98122401d052",
+        "model": "customendpoint/公司平台/gpt-6.1-sol"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>"
+    }
+  }
+}
