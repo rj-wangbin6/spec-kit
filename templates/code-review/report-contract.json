@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "profile": "general",
+  "requiredSections": [
+    {
+      "id": "raw-prompt",
+      "title": "用户输入的原始提示词",
+      "suggestion": "粘贴用户触发本次评审时的原始请求。"
+    },
+    {
+      "id": "model",
+      "title": "用户评审所选择的模型名称",
+      "suggestion": "填写本次评审使用的模型名称；无法确认时写明“未提供”。"
+    },
+    {
+      "id": "strengths",
+      "title": "✅ 优点",
+      "aliases": ["优点"],
+      "suggestion": "列出有代码证据支撑的实现优点；没有可确认优点时写“未发现可确认的优点”。"
+    },
+    {
+      "id": "overview",
+      "title": "📋 提交概览",
+      "suggestion": "填写评审范围、提交或工作区状态、变更文件及统计；不适用的统计项写明原因。"
+    },
+    {
+      "id": "security",
+      "title": "🛡️ 安全审计",
+      "suggestion": "保留审计概要、覆盖范围、发现清单、正面发现和未覆盖风险；未发现问题也需写明实际覆盖范围。"
+    },
+    {
+      "id": "issues",
+      "title": "⚠️ 问题清单",
+      "suggestion": "列出已确认问题；若没有已确认问题，请明确写“未发现已确认问题”，并将待验证项单独说明。"
+    },
+    {
+      "id": "overall",
+      "title": "📊 总体评价",
+      "suggestion": "填写本轮结论、关键风险和验证边界，不要留下模板示例。"
+    },
+    {
+      "id": "appendix",
+      "title": "附录：审查说明",
+      "aliases": ["依据与边界"],
+      "suggestion": "说明评审范围、审查标准、严重度定义及需求来源状态。"
+    }
+  ],
+  "conditionalSections": [
+    {
+      "id": "requirements",
+      "title": "📄 需求文档摘要",
+      "condition": "requirements=present",
+      "notApplicableText": "本轮未提供需求来源",
+      "suggestion": "记录需求来源、核心需求及逐项符合性总结；不要用提交说明替代需求原文。"
+    },
+    {
+      "id": "frontend-backend",
+      "title": "前后端接口对接审查",
+      "condition": "fullstack=present",
+      "notApplicableText": "本轮不涉及前后端接口对接",
+      "suggestion": "提供接口清单、前后端对应证据、已确认问题及联调测试建议。"
+    },
+    {
+      "id": "integration-tests",
+      "title": "联调测试建议",
+      "condition": "fullstack=present",
+      "notApplicableText": "本轮不涉及前后端接口对接",
+      "suggestion": "列出接口连通、数据一致性和异常处理等适用联调检查。"
+    }
+  ],
+  "noFindingsText": "未发现已确认问题",
+  "severityContract": [
+    "P0",
+    "P1",
+    "P2",
+    "P3"
+  ]
+}

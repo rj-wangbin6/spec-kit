@@ -489,17 +489,19 @@ argument-hint: "输入评审场景、项目路径（不填时默认当前工作�
 
 显式调用 `speckit.code-review-report-verifier-agent`，提供报告路径、各仓库根目录和 project_name、准确提交范围或明确非 Git 范围、模板、原始需求、状态文件，以及全部规则索引/详情、安全、路径、需求、validator 结果的实际文件路径。要求先读文件再独立核实对应版本源码，逐条返回通过 / 需修订 / 不成立 / 待验证，检查模板结构、范围覆盖、摘要计数、证据、风险等级、上传清单与正文一致性。不得仅依据写作者或 validator 的摘要判定。
 
+复核分两阶段：先执行独立风险覆盖复核（在阅读报告问题清单前，基于变更文件、入口和调用链事实独立提出风险检查假设，输出覆盖表和漏报候选），再逐条核验已有发现的真实性。漏报候选不得丢弃，必须进入步骤 2 的修订处理。
+
 复核代理只返回结果；编排器原样保存 `08-report-verification-00.md`，更新 `stage_status` 和 `artifacts`。无问题报告及所有轻量路由同样必须执行。
 
 ### 步骤 2：唯一写入者修订与复查
 
-需修订时串行调用 report-writer，显式传入 `report_mode=revision`、原 `template_path`、`target_report_path=<session_dir>/08-final-review-report.md`、`session_dir`、`session_state_path`、`original_user_prompt`、`selected_model_name`、复核路径及原始证据路径。按裁决处理问题，撤回必须有明确反证并保留理由，待验证不能伪装为已确认。同步修订报告、摘要和上传清单，不修改业务代码，保持模板 schema。
+需修订时串行调用 report-writer，显式传入 `report_mode=revision`、原 `template_path`、`target_report_path=<session_dir>/08-final-review-report.md`、`session_dir`、`session_state_path`、`original_user_prompt`、`selected_model_name`、复核路径及原始证据路径。按裁决处理问题，撤回必须有明确反证并保留理由，待验证不能伪装为已确认。漏报候选逐项处理：经独立核实成立的写入问题清单并同步统计与上传清单，证据不足的列入待确认，有反证的记录排除理由；处理结果记入修订记录。同步修订报告、摘要和上传清单，不修改业务代码，保持模板 schema。
 
 编排器将返回的逐项处理记录保存为 `09-report-revision-01.md` 或 `09-report-revision-02.md`，再调用复核代理读取最新报告、上一轮裁决与修订记录，重新检查修改项及整体一致性，保存对应 `08-report-verification-01.md` 或 `08-report-verification-02.md`。初审后最多两轮修订复查，不得通过重置阶段或切换路由绕过上限；未解决项交用户补充或裁决，不进入记忆回写或上传。
 
 ### 步骤 3：最终门控
 
-仅当最新复核“总体结论：通过”“上传门控：允许”，所有必需阶段实际完成且无未解决修订、待验证或阻塞时，才记录 `report_verification`（包含报告路径、轮次、结果路径及门控）并进入阶段 6.5。报告实质修改后门控失效，需重新复核。无问题报告通过后仍按阶段 7 原约定跳过远程同步。
+仅当最新复核“总体结论：通过”“上传门控：允许”，所有必需阶段实际完成且无未解决修订、待验证、未处理漏报候选或阻塞时，才记录 `report_verification`（包含报告路径、轮次、结果路径及门控）并进入阶段 6.5。报告实质修改后门控失效，需重新复核。无问题报告通过后仍按阶段 7 原约定跳过远程同步。
 
 有争议的结果可以保留为本地待处理报告，但不得记为最终通过，也不得写入已确认问题的历史统计。复核通过后，由 report-writer 按已核实报告更新摘要，编排器输出最终结果；摘要不得引入报告中不存在的新结论。
 

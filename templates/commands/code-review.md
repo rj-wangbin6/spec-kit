@@ -733,11 +733,11 @@ return Result.success(order.getStatus().getCode());  // 返回 "pending"
 
 #### 11.1 独立报告复核（上传前必须执行）
 
-报告生成后不得直接上传。调用 `speckit.code-review-report-verifier`（定义见 `code-review-report-verifier-agent.md`），独立排查问题幻觉并检查报告完整性。
+报告生成后不得直接上传。调用 `speckit.code-review-report-verifier-agent`（定义见 `code-review-report-verifier-agent.md`），独立排查问题幻觉并检查报告完整性。复核分两阶段执行：先从变更范围、入口和关键路径独立提出风险检查假设并输出漏报候选，再逐条核验报告已有发现的真实性，以减少已有问题列表带来的锚定。
 
 ```javascript
 runSubagent({
-  agentName: "speckit.code-review-report-verifier",
+  agentName: "speckit.code-review-report-verifier-agent",
   description: "独立复核审查报告",
   prompt: `
 请独立复核以下报告，主动寻找反证，不能仅复述原审查结论。
@@ -750,7 +750,9 @@ project_name：{project_name}
 变更收集、调用链、需求审查、规则审查、安全审计、接口对接结果及逐项对账：{upstream_result_paths_or_complete_results}
 模式：{初审或第N轮修订复查}
 上一轮复核与修订记录（复查必传）：{previous_verdict_and_revision_record}
-逐条返回通过、需修订、不成立或待验证，并返回完整性检查和上传门控。
+先执行独立风险覆盖复核：在阅读报告问题清单之前，基于变更文件、入口和调用链事实独立提出风险检查假设，输出「独立风险覆盖复核」表和「漏报候选」。
+再逐条核验报告已有发现，返回通过、需修订、不成立或待验证，并返回完整性检查和上传门控。
+存在未处理的漏报候选时，上传门控必须为禁止。
 仅独立取证和提出意见，不修改报告或代码，不上传。
   `
 })
@@ -763,15 +765,23 @@ project_name：{project_name}
 1. 主 Agent 保留逐问题复核记录；通过的问题保留，需修订的问题按证据修改。
 2. 不成立的问题必须有明确反证，删除正式问题并保留撤回原因；包括严重或高危安全发现，不得无证据删减。
 3. 待验证的问题写入待验证说明，不得冒充已确认问题；缺少上下文时向用户说明所需信息。
-4. 主 Agent 统一修订总报告，重新计算统计、同步摘要和详情、合并同根因重复问题并保留来源；不修改业务代码。
-5. 修订后再次调用复核子代理，传入最新报告、上一轮结论和逐项修订记录，复查修改项及报告整体一致性。
-6. 最多两轮修订复查；仍有争议、完整性错误或阻塞时停止上传，明确输出未通过和待处理事项，不得无限循环或声称通过。
+4. 复核代理返回的漏报候选必须逐项处理：主 Agent 独立核实证据后，确认成立的按 6.3 统一格式补入 `⚠️ 问题清单` 并更新统计与严重度对账；证据不足的列入待确认项；有明确反证的记录排除理由。不得未处理漏报候选就直接进入上传，也不得因候选不在原报告中而忽略。
+5. 主 Agent 统一修订总报告，重新计算统计、同步摘要和详情、合并同根因重复问题并保留来源；不修改业务代码。
+6. 修订后重新运行报告结构检查脚本，并再次调用复核子代理，传入最新报告、上一轮结论和逐项修订记录，复查修改项、漏报候选处理结果及报告整体一致性。
+7. 最多两轮修订复查；仍有争议、完整性错误、未处理漏报候选或阻塞时停止上传，明确输出未通过和待处理事项，不得无限循环或声称通过。
 
-主 Agent 将复核结果及修订记录保存到报告同目录的 `code-review-YYYY-MM-DD-{author_name}-verification.md`，记录报告路径、轮次、逐项处理及最终门控。复核子代理保持只读。
+主 Agent 将复核结果及修订记录保存到报告同目录的 `code-review-YYYY-MM-DD-{author_name}-verification.md`，记录报告路径、轮次、逐项处理（含每个漏报候选的核实结果与去向）及最终门控。复核子代理保持只读。
 
 #### 11.3 上传门控
 
-仅当最新报告经复核返回“总体结论：通过”和“上传门控：允许”，且已处理所有修订、待验证与阻塞项时，才能进入步骤 12。记录复核摘要与轮次，并上传这一版已通过的报告；门控后若报告实质内容再次改变，必须重新复核。
+通用报告在上传前必须同时通过以下两道门控：
+
+1. 执行 `node .specify/templates/code-review/scripts/validate-report.mjs --report "{report_path}" --requirements {present|absent} --fullstack {present|absent}`。参数必须来自本轮已确认的需求来源和前置检查/变更范围，不得让脚本自行推断。
+2. 最新报告经独立复核返回“总体结论：通过”和“上传门控：允许”，且所有修订、待验证与阻塞项均已处理。
+
+结构脚本失败时，主 Agent 必须逐条读取友好诊断，补齐或修正报告后重新运行；不得删除必需章节来绕过检查。报告任何修改后均须重新运行结构检查，并按复核代理要求重新复核。结构脚本仅检查报告章节结构与明显占位内容，不证明问题结论正确、风险覆盖完整或报告可上传。Node.js、脚本或报告契约缺失、参数来源不明确、脚本执行失败时均阻止上传并说明阻塞原因。
+
+只有结构检查通过、最新独立复核允许上传，且已处理所有修订、待验证与阻塞项时，才能进入步骤 12。上传内容必须是刚刚通过结构检查和独立复核的报告版本；若在门控后再次编辑，必须重新执行两项检查。
 
 没有发现问题的报告同样必须完成复核，不得跳过覆盖范围与完整性检查。该流程借鉴对抗式评审思想，不是 GAN 训练，也不要求复核代理强行找错。
 
@@ -1141,7 +1151,7 @@ runSubagent({
 - [ ] 保存到 docs/review-results/
 
 报告复核与修订：
-- [ ] 调用 speckit.code-review-report-verifier，传入报告、准确提交范围、模板规范及完整上游结果
+- [ ] 调用 speckit.code-review-report-verifier-agent，传入报告、准确提交范围、模板规范及完整上游结果
 - [ ] 独立检查每条问题的证据、可达性、风险等级、需求依据与修复方案
 - [ ] 检查范围覆盖、安全结果、问题详情、统计与摘要一致性
 - [ ] 主 Agent 按通过 / 需修订 / 不成立 / 待验证逐项处理，保留反证和修订记录
@@ -1227,7 +1237,7 @@ runSubagent({
    - speckit.code-review-analyze（路径追踪）
   - speckit.code-review-requirement-checker-agent（需求符合性审查，如有需求来源）
    - speckit.code-review-security-agent（安全审计，定义见 `code-review-security-agent.md`）
-  - speckit.code-review-report-verifier（独立报告复核，定义见 `code-review-report-verifier-agent.md`；只读核实，主 Agent 修订，上传前门控）
+  - speckit.code-review-report-verifier-agent（独立报告复核，定义见 `code-review-report-verifier-agent.md`；只读核实，主 Agent 修订，上传前门控）
 
 ### 安全子代理使用的技能
 5. **code-audit** - OWASP Top 10 + CWE Top 25 白盒安全审计（必选）
