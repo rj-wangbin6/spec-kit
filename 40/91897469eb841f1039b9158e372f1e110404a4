@@ -1,0 +1,147 @@
+templates/commands/code-review.md
+  h_6d55b12ff20c3c 2,19,25,29,33,36,40-41,43,147-149,221,223-225,227,257,283,285-286,288,290,292,294-296,298,300-305,307,309,311,313-323,325,327,337,339-374,376,378-380,384,407,421,431,433,435-436,445,447,449,454-476,478-486,488-514,527,540,556,640,642,675,708,723,730-731,734,750,761,772,774,778,782,784,807,809,813,822,837,840,844,913,930,1014-1015,1035-1038,1057-1058,1077,1099,1104-1105,1107-1108,1110-1111,1113,1118,1120,1123-1125,1127,1134,1139,1153-1154,1157,1172-1173,1180-1181,1197,1203,1228,1294,1296
+  s_5873960957e019::t_4bca32ebb4ed76 1229
+  s_5873960957e019::t_881bcdc65834fd 389,715,975,1012,1040,1059,1114,1333
+  s_5873960957e019::t_ef87d5358ef505 1182,1190,1234
+  s_5873960957e019::t_ef87d5358ef505 26-28,31,34-35,38,45,47-50,52-56,58-60,62-63,67,297,299,375,377,477,487,1039,1112,1126
+templates/commands/code-review-collect-agent.md
+  h_6d55b12ff20c3c 60-61,66-68
+templates/commands/code-review-security-agent.md
+  h_6d55b12ff20c3c 43,175-177,234-246,293
+  h_6d55b12ff20c3c 178,247
+templates/commands/code-review-collect.md
+  h_6d55b12ff20c3c 18,28,39,44-45,50-52,58-60
+  h_6d55b12ff20c3c 61
+templates/commands/code-review-requirement-checker-agent.md
+  h_6d55b12ff20c3c 5,7,29,32-33,87-88,117
+templates/commands/code-review-precheck-agent.md
+  h_6d55b12ff20c3c 2,4-5,9,113-114,123
+---
+{
+  "schema_version": "authorship/3.1.0",
+  "git_ai_version": "2.2.55",
+  "x_user_id": "105",
+  "base_commit_sha": "4091897469eb841f1039b9158e372f1e110404a4",
+  "prompts": {
+    "s_5873960957e019::t_1b9642ea117961": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "610a7c8e-4e21-4513-b36c-8e344d13ca76",
+        "model": "customendpoint/公司平台/gpt-6.1-terra"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 56,
+      "total_deletions": 56,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "s_5873960957e019::t_4bca32ebb4ed76": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "610a7c8e-4e21-4513-b36c-8e344d13ca76",
+        "model": "customendpoint/公司平台/gpt-6.1-terra"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 56,
+      "total_deletions": 56,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "s_5873960957e019::t_881bcdc65834fd": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "610a7c8e-4e21-4513-b36c-8e344d13ca76",
+        "model": "customendpoint/公司平台/gpt-6.1-terra"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 56,
+      "total_deletions": 56,
+      "accepted_lines": 8,
+      "overriden_lines": 1
+    },
+    "s_5873960957e019::t_d3b906d0fa160d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "610a7c8e-4e21-4513-b36c-8e344d13ca76",
+        "model": "customendpoint/公司平台/gpt-6.1-terra"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 56,
+      "total_deletions": 56,
+      "accepted_lines": 14,
+      "overriden_lines": 1
+    },
+    "s_5873960957e019::t_ef87d5358ef505": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "610a7c8e-4e21-4513-b36c-8e344d13ca76",
+        "model": "customendpoint/公司平台/gpt-6.1-terra"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [
+        {
+          "type": "user",
+          "text": "[代码评审多Agent智能体.md](file:///d%3A/develop/githubspeckit/spec-kit/templates/commands/%E4%BB%A3%E7%A0%81%E8%AF%84%E5%AE%A1%E5%A4%9AAgent%E6%99%BA%E8%83%BD%E4%BD%93.md) [code-review.md](file:///d%3A/develop/githubspeckit/spec-kit/templates/commands/code-review.md) 现在帮我检查下当前这个项目的这两个脚手架项目的文件，里面关于引用其他自定义agent的时候，名称不对，帮我他统一检查修改下。有些缺少了-agent这个后缀，例如引用security的地方就是。应该还有些其他的问题",
+          "timestamp": "2026-11-10T01:38:04.652Z"
+        },
+        {
+          "type": "user",
+          "text": "有些地方你改多了，有些我看你删除了，这样不行。某些回退下，现在调整一下，只修改：code-review-security这个",
+          "timestamp": "2026-11-10T01:47:49.793Z"
+        }
+      ],
+      "total_additions": 56,
+      "total_deletions": 56,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    },
+    "s_6b34f74e1e959a::t_0c7e6e183c59f2": {
+      "agent_id": {
+        "tool": "github-copilot-tab",
+        "id": "ai_tab-1794277791209",
+        "model": "default"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "s_a38dd6c35a4ea4::t_16c84b953a0611": {
+      "agent_id": {
+        "tool": "github-copilot-tab",
+        "id": "ai_tab-1794277601666",
+        "model": "default"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  },
+  "humans": {
+    "h_6d55b12ff20c3c": {
+      "author": "rj-longyu <longyu@ruijie.com.cn>"
+    },
+    "h_edde5220d38002": {
+      "author": "longyu <longyu@ruijie.com.cn>"
+    }
+  },
+  "sessions": {
+    "s_5873960957e019": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "610a7c8e-4e21-4513-b36c-8e344d13ca76",
+        "model": "customendpoint/公司平台/gpt-6.1-terra"
+      },
+      "human_author": "rj-longyu <longyu@ruijie.com.cn>"
+    }
+  }
+}
